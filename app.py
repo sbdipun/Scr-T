@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response
 import requests
 from bs4 import BeautifulSoup
 
@@ -39,7 +39,7 @@ def get_movie_details(url):
         soup = BeautifulSoup(response.text, 'lxml')
 
         mag = [a['href'] for a in soup.find_all('a', href=True) if 'magnet:' in a['href']]
-        filelink = [a['href'] for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
+        filelink = [a['href'] for a soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
 
         movie_details = []
         movie_title = soup.find('h1').text.strip()
@@ -55,10 +55,28 @@ def get_movie_details(url):
         print(f"Error retrieving movie details: {e}")
         return []
 
+# Flask route to expose the scraped data as JSON
 @app.route('/scrape', methods=['GET'])
 def scrape():
     movie_list, real_dict = tamilmv()
     return jsonify({'movies': movie_list, 'details': real_dict})
+
+# RSS-like endpoint
+@app.route('/rss', methods=['GET'])
+def rss():
+    movie_list, real_dict = tamilmv()
+    rss_feed = "<rss><channel><title>TamilMV Movies</title>"
+
+    for title in movie_list:
+        rss_feed += f"<item><title>{title}</title></item>"
+
+    rss_feed += "</channel></rss>"
+    return Response(rss_feed, mimetype='application/xml')
+
+# For Vercel compatibility
+@app.route('/')
+def home():
+    return "Welcome to the TamilMV Scraper API. Use /scrape to get JSON data or /rss for an RSS feed."
 
 if __name__ == '__main__':
     app.run(debug=True)
