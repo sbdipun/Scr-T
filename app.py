@@ -61,17 +61,6 @@ def scrape():
     movie_list, real_dict = tamilmv()
     return jsonify({'movies': movie_list, 'details': real_dict})
 
-# RSS-like endpoint
-@app.route('/rss', methods=['GET'])
-def rss():
-    movie_list, real_dict = tamilmv()
-    rss_feed = "<rss><channel><title>TamilMV Movies</title>"
-
-    for title in movie_list:
-        rss_feed += f"<item><title>{title}</title></item>"
-
-    rss_feed += "</channel></rss>"
-    return Response(rss_feed, mimetype='application/xml')
 
 # For Vercel compatibility
 @app.route('/')
