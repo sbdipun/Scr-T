@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import re
-import html
 
 # Create Flask app
 app = Flask(__name__)
@@ -20,7 +19,9 @@ def tamilmv():
     web = requests.get(BASE_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
+    # Find all the movie elements
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
+
     real_list = []
 
     for temp in temps:
@@ -37,31 +38,38 @@ def get_movie_details(url):
         if not url.startswith(('http://', 'https://')):
             url = urllib.parse.urljoin(BASE_URL, url)
 
-        html_response = requests.get(url, timeout=10)
-        html_response.raise_for_status()
-        soup = BeautifulSoup(html_response.text, 'lxml')
+        html = requests.get(url, timeout=10)
+        html.raise_for_status()
+        soup = BeautifulSoup(html.text, 'lxml')
 
         mag = [a['href'] for a in soup.find_all('a', href=True) if 'magnet:' in a['href']]
         filelink = [a['href'] for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
 
         movie_title = soup.find('h1').text.strip() if soup.find('h1') else "Unknown Title"
-        movie_details = []
 
+        movie_details = []
         for p in range(len(mag)):
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(mag[p]).query)
             if 'dn' in query_params:
                 title_encoded = query_params['dn'][0]
                 movie_title = urllib.parse.unquote(title_encoded)
 
-                # Extract size from title
+                # Extract size from the dn parameter
                 size_match = re.search(r'(\d+(\.\d+)?\s?(GB|MB|TB))', movie_title)
                 size = size_match.group(1) if size_match else "Unknown"
 
+            # Fix the torrent file link
+            torrent_link = filelink[p] if p < len(filelink) else None
+            if torrent_link:
+                torrent_link = torrent_link.replace("http:/", "https://")
+                if not torrent_link.startswith('https://'):
+                    torrent_link = urllib.parse.urljoin(BASE_URL, torrent_link)
+
             movie_details.append({
-                "title": html.escape(movie_title),
+                "title": movie_title,
                 "size": size,
-                "magnet_link": html.escape(mag[p]),
-                "torrent_file_link": html.escape(filelink[p]) if p < len(filelink) else None
+                "magnet_link": mag[p],
+                "torrent_file_link": torrent_link
             })
 
         return movie_details
@@ -70,16 +78,17 @@ def get_movie_details(url):
 
 # Define routes
 @app.route("/")
-def home():
-    return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss at the end of the URL. Developed By Mr. Shaw"})
+def home():   
+    return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
 
 # Route to display RSS feed
 @app.route("/rss", methods=["GET"])
 def fetch_movies():
     movie_details = tamilmv()
 
-    rss_feed = """<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+    # Generate RSS XML
+    rss_feed = """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<rss version=\"2.0\">
 <channel>
     <title>TamilMV Latest Movies</title>
     <link>{base_url}</link>
@@ -91,7 +100,7 @@ def fetch_movies():
             rss_feed += f"""
     <item>
         <title>{detail['title']}</title>
-        <link>{detail['magnet_link']}</link>
+        <link>{detail['magnet_link'].replace('&', '&amp;')}</link>
         <description>Size: {detail['size']}, Torrent File: {detail['torrent_file_link']}</description>
     </item>
 """
