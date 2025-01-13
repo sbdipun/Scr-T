@@ -12,26 +12,25 @@ BASE_URL = 'https://www.1tamilmv.app/'
 # Function to scrape movie details
 def tamilmv():
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
     }
+    
     real_dict = {}
+    
+    web = requests.get(mainUrl, headers=headers)
+    soup = BeautifulSoup(web.text, 'lxml')
 
-    try:
-        web = requests.get(BASE_URL, headers=headers, timeout=10)
-        web.raise_for_status()
-        soup = BeautifulSoup(web.text, 'lxml')
-
-        temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
-        for i in range(21):
-            title = temps[i].find_all('a')[0].text.strip()
-            link = temps[i].find('a')['href'] # Convert to absolute URL
-
-            # Fetch movie details for each link
-            movie_details = get_movie_details(link)
-            real_dict[title] = movie_details
-
-    except requests.exceptions.RequestException as e:
-        return {"error": str(e)}
+    temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
+    
+    if len(temps) < 21:
+        return {}
+    
+    for i in range(21):
+        title = temps[i].findAll('a')[0].text.strip()
+        link = temps[i].find('a')['href']
+        
+        movie_details = get_movie_details(link)
+        real_dict[title] = movie_details
 
     return real_dict
 
