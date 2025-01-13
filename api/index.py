@@ -21,10 +21,14 @@ def tamilmv():
     web = requests.get(BASE_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
+    # Find all the movie elements
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
     
     if len(temps) < 21:
         return {}
+
+    # Reverse the list to get the latest posts on top
+    temps = temps[::-1]
 
     for i in range(21):
         title = temps[i].findAll('a')[0].text.strip()
@@ -34,6 +38,7 @@ def tamilmv():
         real_dict[title] = movie_details
 
     return real_dict
+
 
 # Function to get movie details
 def get_movie_details(url):
