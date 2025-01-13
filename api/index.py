@@ -17,7 +17,7 @@ def tamilmv():
     
     real_dict = {}
     
-    web = requests.get(mainUrl, headers=headers)
+    web = requests.get(BASE_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
