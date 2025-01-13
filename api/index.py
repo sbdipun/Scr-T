@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 
 # Create Flask app
 app = Flask(__name__)
@@ -24,7 +23,7 @@ def tamilmv():
     
     if len(temps) < 21:
         return {}
-    
+
     for i in range(21):
         title = temps[i].findAll('a')[0].text.strip()
         link = temps[i].find('a')['href']
@@ -69,4 +68,4 @@ def fetch_movies():
 
 # Expose the app as `app`
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
