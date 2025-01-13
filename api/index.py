@@ -22,7 +22,8 @@ def tamilmv():
 
     # Find all the movie elements
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
-    
+
+    # If no movies are found, return an empty dictionary
     if len(temps) < 21:
         return {}
 
@@ -41,9 +42,7 @@ def tamilmv():
 # Function to get movie details
 def get_movie_details(url):
     try:
-        # Check if the URL starts with http:// or https://
         if not url.startswith(('http://', 'https://')):
-            # Construct the full URL using the base URL
             url = urllib.parse.urljoin(BASE_URL, url)
 
         html = requests.get(url, timeout=10)
@@ -54,17 +53,16 @@ def get_movie_details(url):
         mag = [a['href'] for a in soup.find_all('a', href=True) if 'magnet:' in a['href']]
         filelink = [a['href'] for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
 
-        # Movie title extraction (from <h1> tag or 'dn' parameter in the magnet link)
+        # Movie title extraction
         movie_title = soup.find('h1').text.strip() if soup.find('h1') else "Unknown Title"
 
         movie_details = []
-        
+
         for p in range(len(mag)):
-            # Parse the 'dn' parameter in the magnet link if available
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(mag[p]).query)
             if 'dn' in query_params:
-                title_encoded = query_params['dn'][0]  # Get the first value of 'dn'
-                movie_title = urllib.parse.unquote(title_encoded)  # Decode the URL-encoded title
+                title_encoded = query_params['dn'][0]
+                movie_title = urllib.parse.unquote(title_encoded)
 
             movie_details.append({
                 "title": movie_title,
@@ -76,14 +74,9 @@ def get_movie_details(url):
     except Exception as e:
         return {"error": str(e)}
 
-# Define routes
-@app.route("/")
-def home():
-    return jsonify({"message": "Welcome to TamilMV Scrapper Site!! Developed By Mr. Shaw"})
-
+# Route to display RSS feed
 @app.route("/fetch", methods=["GET"])
 def fetch_movies():
-    # Get movie details
     movie_details = tamilmv()
 
     # Generate RSS XML
@@ -95,7 +88,8 @@ def fetch_movies():
     <description>Latest movies from TamilMV</description>
 """.format(base_url=BASE_URL)
 
-    for title, details in movie_details.items():
+    # Reverse the movie details to ensure latest items appear at the top
+    for title, details in reversed(movie_details.items()):
         for detail in details:
             rss_feed += f"""
     <item>
@@ -110,9 +104,9 @@ def fetch_movies():
 </rss>
 """
 
-    # Return the RSS feed as a response with the appropriate content type
+    # Return the RSS feed
     return Response(rss_feed, mimetype='application/rss+xml')
 
-# Run the app
+# Run the Flask app
 if __name__ == "__main__":
     app.run(debug=True)
