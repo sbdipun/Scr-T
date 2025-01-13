@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 # Create Flask app
 app = Flask(__name__)
@@ -33,9 +34,12 @@ def tamilmv():
 
     return real_dict
 
-# Function to get movie details
 def get_movie_details(url):
     try:
+        # Ensure the URL is properly formatted
+        if not url.startswith('http'):
+            url = urljoin(BASE_URL, url)  # Use urljoin to construct the full URL
+
         html = requests.get(url, timeout=10)
         html.raise_for_status()
         soup = BeautifulSoup(html.text, 'lxml')
@@ -55,6 +59,7 @@ def get_movie_details(url):
         return movie_details
     except Exception as e:
         return {"error": str(e)}
+
 
 # Define routes
 @app.route("/")
