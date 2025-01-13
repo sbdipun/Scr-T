@@ -65,8 +65,9 @@ def get_movie_details(url):
 
 # Define routes
 @app.route("/")
-def home():
-    return jsonify({"message": "<strong>Welcome to TamilMV RSS FEED Site!! Developed By Mr. Shaw</strong>"})
+def home():   
+    return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
+
     
 # Route to display RSS feed
 @app.route("/rss", methods=["GET"])
