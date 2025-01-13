@@ -97,12 +97,17 @@ def fetch_movies():
     <title>TamilMV Latest Movies</title>
     <link>{base_url}</link>
     <description>Latest movies from TamilMV!! Developed By Mr. Shaw</description>
+    <atom:link href="{base_url}/rss" rel="self" type="application/rss+xml"/>
 """.format(base_url=BASE_URL)
 
     for movie in movie_details:
         for detail in movie["details"]:
+            # Generate a unique GUID for the item (based on the magnet link)
+            guid = detail['magnet_link'] if detail['magnet_link'] else f"{movie['title']}_{detail['size']}"
+
             rss_feed += f"""
     <item>
+        <guid>{escape_xml(guid)}</guid>
         <title>{escape_xml(detail['title'])}</title>
         <link>{escape_xml(detail['magnet_link'])}</link>
         <description>Size: {escape_xml(detail['size'])}, Torrent File: {escape_xml(detail['torrent_file_link'])}</description>
@@ -119,4 +124,4 @@ def fetch_movies():
 # Run the Flask app
 if __name__ == "__main__":
     app.run(debug=True)
-    
+            
