@@ -15,29 +15,25 @@ def tamilmv():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
     }
-
+    
     real_dict = {}
+    
     web = requests.get(BASE_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
-    # Target the latest section more accurately
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
     
-    if not temps:
+    if len(temps) < 21:
         return {}
 
-    # Extract all movie details and keep the latest at the top
-    for temp in temps:
-        title = temp.find('a').text.strip()
-        link = temp.find('a')['href']
+    for i in range(21):
+        title = temps[i].findAll('a')[0].text.strip()
+        link = temps[i].find('a')['href']
         
-        # Get detailed links
         movie_details = get_movie_details(link)
         real_dict[title] = movie_details
 
-    # Return movies sorted by their keys (titles)
-    return dict(sorted(real_dict.items(), reverse=True))
-
+    return real_dict
 
 # Function to get movie details
 def get_movie_details(url):
