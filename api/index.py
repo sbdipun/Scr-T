@@ -37,6 +37,10 @@ def tamilmv():
 # Function to get movie details
 def get_movie_details(url):
     try:
+        # Check if the URL starts with http:// or https://
+        if not url.startswith(('http://', 'https://')):
+            return {"error": "Invalid URL format. URL must start with http:// or https://."}
+
         html = requests.get(url, timeout=10)
         html.raise_for_status()
         soup = BeautifulSoup(html.text, 'lxml')
