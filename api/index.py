@@ -37,7 +37,7 @@ def tamilmv():
 def get_movie_details(url):
     try:
         # Ensure the URL is properly formatted
-        if not url.startswith('http'):
+        if not url.startswith('https://'):
             url = urljoin(BASE_URL, url)  # Use urljoin to construct the full URL
 
         html = requests.get(url, timeout=10)
