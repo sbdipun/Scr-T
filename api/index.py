@@ -16,15 +16,15 @@ def tamilmv():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
     }
 
-    real_list = []
     web = requests.get(BASE_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
     # Find all the movie elements
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
 
-    # Extract movie details in reverse order to get the latest on top
-    for temp in reversed(temps):
+    real_list = []
+
+    for temp in temps:
         title = temp.find('a').text.strip()
         link = temp.find('a')['href']
         movie_details = get_movie_details(link)
@@ -108,3 +108,4 @@ def fetch_movies():
 # Run the Flask app
 if __name__ == "__main__":
     app.run(debug=True)
+            
