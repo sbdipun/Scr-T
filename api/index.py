@@ -1,7 +1,6 @@
-from flask import Flask, jsonify, request
+from flask import Flask, Response, request
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 import urllib.parse
 
 # Create Flask app
@@ -39,10 +38,8 @@ def tamilmv():
 
     return real_dict
 
-
 # Function to get movie details
 def get_movie_details(url):
-
     try:
         # Check if the URL starts with http:// or https://
         if not url.startswith(('http://', 'https://')):
@@ -86,9 +83,36 @@ def home():
 
 @app.route("/fetch", methods=["GET"])
 def fetch_movies():
+    # Get movie details
     movie_details = tamilmv()
-    return jsonify(movie_details)
 
-# Expose the app as `app`
+    # Generate RSS XML
+    rss_feed = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+    <title>TamilMV Latest Movies</title>
+    <link>{base_url}</link>
+    <description>Latest movies from TamilMV</description>
+""".format(base_url=BASE_URL)
+
+    for title, details in movie_details.items():
+        for detail in details:
+            rss_feed += f"""
+    <item>
+        <title>{detail['title']}</title>
+        <link>{detail['magnet_link']}</link>
+        <description>Download link: {detail['torrent_file_link']}</description>
+    </item>
+"""
+
+    rss_feed += """
+</channel>
+</rss>
+"""
+
+    # Return the RSS feed as a response with the appropriate content type
+    return Response(rss_feed, mimetype='application/rss+xml')
+
+# Run the app
 if __name__ == "__main__":
     app.run(debug=True)
