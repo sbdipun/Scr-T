@@ -36,10 +36,12 @@ def tamilmv():
 
 # Function to get movie details
 def get_movie_details(url):
+
     try:
         # Check if the URL starts with http:// or https://
         if not url.startswith(('http://', 'https://')):
-            return {"error": "Invalid URL format. URL must start with http:// or https://."}
+            # Construct the full URL using the base URL
+            url = urllib.parse.urljoin(BASE_URL, url)
 
         html = requests.get(url, timeout=10)
         html.raise_for_status()
@@ -70,7 +72,6 @@ def get_movie_details(url):
         return movie_details
     except Exception as e:
         return {"error": str(e)}
-
 
 # Define routes
 @app.route("/")
