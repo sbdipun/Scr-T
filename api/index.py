@@ -5,9 +5,13 @@ from bs4 import BeautifulSoup
 # Create Flask app
 app = Flask(__name__)
 
-# Function to scrape movies from TamilMV
+from urllib.parse import urljoin
+
+# Base URL
+BASE_URL = 'https://www.1tamilmv.legal/'
+
+# Function to scrape movies
 def tamilmv():
-    main_url = 'https://www.1tamilmv.app/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
     }
@@ -15,14 +19,15 @@ def tamilmv():
     real_dict = {}
 
     try:
-        web = requests.get(main_url, headers=headers, timeout=10)
+        web = requests.get(BASE_URL, headers=headers, timeout=10)
         web.raise_for_status()
         soup = BeautifulSoup(web.text, 'lxml')
-        temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
 
+        temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
         for i in range(min(21, len(temps))):
             title = temps[i].find_all('a')[0].text.strip()
-            link = temps[i].find('a')['href']
+            relative_link = temps[i].find('a')['href']
+            link = urljoin(BASE_URL, relative_link)  # Convert to absolute URL
             movie_list.append(title)
 
             movie_details = get_movie_details(link)
@@ -33,12 +38,9 @@ def tamilmv():
 
     return movie_list, real_dict
 
+# Function to get movie details
 def get_movie_details(url):
     try:
-        # Ensure the URL is absolute by adding the base URL if it's missing
-        if url.startswith("/"):
-            url = "https://www.1tamilmv.legal" + url
-        
         html = requests.get(url, timeout=10)
         html.raise_for_status()
         soup = BeautifulSoup(html.text, 'lxml')
@@ -58,6 +60,7 @@ def get_movie_details(url):
         return movie_details
     except Exception as e:
         return {"error": str(e)}
+
 
 # Define routes
 @app.route("/")
