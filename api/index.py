@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Function to scrape movies from TamilMV
 def tamilmv():
-    mainUrl = 'https://www.1tamilmv.legal/'
+    main_url = 'https://www.1tamilmv.legal/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
     }
@@ -14,7 +14,7 @@ def tamilmv():
     real_dict = {}
 
     try:
-        web = requests.get(mainUrl, headers=headers, timeout=10)
+        web = requests.get(main_url, headers=headers, timeout=10)
         web.raise_for_status()
         soup = BeautifulSoup(web.text, 'lxml')
         temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
@@ -68,6 +68,11 @@ def fetch_movies():
         "details": movie_details
     })
 
-# Required for Vercel to handle the request
+# Vercel handler
 def handler(request, *args, **kwargs):
-    return app(environ=request.environ, start_response=request.start_response)
+    from werkzeug.middleware.dispatcher import DispatcherMiddleware
+    from werkzeug.serving import run_simple
+
+    app.wsgi_app = DispatcherMiddleware(None, {'/': app})
+    run_simple('0.0.0.0', 3000, app)
+
