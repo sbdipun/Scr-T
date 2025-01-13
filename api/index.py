@@ -33,9 +33,12 @@ def tamilmv():
 
     return movie_list, real_dict
 
-# Function to scrape movie details
 def get_movie_details(url):
     try:
+        # Ensure the URL is absolute by adding the base URL if it's missing
+        if url.startswith("/"):
+            url = "https://www.1tamilmv.legal" + url
+        
         html = requests.get(url, timeout=10)
         html.raise_for_status()
         soup = BeautifulSoup(html.text, 'lxml')
