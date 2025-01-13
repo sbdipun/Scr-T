@@ -16,21 +16,21 @@ def tamilmv():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
     }
 
-    real_dict = {}
+    real_list = []
     web = requests.get(BASE_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
     # Find all the movie elements
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
 
-    # Extract movie details in the correct order
-    for temp in temps:
+    # Extract movie details in reverse order to get the latest on top
+    for temp in reversed(temps):
         title = temp.find('a').text.strip()
         link = temp.find('a')['href']
         movie_details = get_movie_details(link)
-        real_dict[title] = movie_details
+        real_list.append({"title": title, "details": movie_details})
 
-    return real_dict
+    return real_list
 
 # Function to get movie details
 def get_movie_details(url):
@@ -88,13 +88,13 @@ def fetch_movies():
     <description>Latest movies from TamilMV!! Made By Mr. Shaw</description>
 """.format(base_url=BASE_URL)
 
-    for title, details in movie_details.items():
-        for detail in details:
+    for movie in movie_details:
+        for detail in movie["details"]:
             rss_feed += f"""
     <item>
         <title>{detail['title']}</title>
         <link>{detail['magnet_link']}</link>
-        <description>size: {detail['size']}, Torrent File: {detail['torrent_file_link']}</description>
+        <description>Size: {detail['size']}, Torrent File: {detail['torrent_file_link']}</description>
     </item>
 """
 
