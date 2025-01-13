@@ -64,7 +64,7 @@ def get_movie_details(url):
         return {"error": str(e)}
 
 # Route to display RSS feed
-@app.route("/fetch", methods=["GET"])
+@app.route("/rss", methods=["GET"])
 def fetch_movies():
     movie_details = tamilmv()
 
