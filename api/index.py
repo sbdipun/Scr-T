@@ -94,7 +94,7 @@ def fetch_movies():
     <item>
         <title>{detail['title']}</title>
         <link>{detail['magnet_link']}</link>
-        <description>Size: {detail['size']}, Torrent File: {detail['torrent_file_link']}</description>
+        <description>size: {detail['size']}, Torrent File: {detail['torrent_file_link']}</description>
     </item>
 """
 
