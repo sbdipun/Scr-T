@@ -63,6 +63,11 @@ def get_movie_details(url):
     except Exception as e:
         return {"error": str(e)}
 
+# Define routes
+@app.route("/")
+def home():
+    return jsonify({"message": "Welcome to TamilMV Scrapper Site!! Developed By Mr. Shaw"})
+    
 # Route to display RSS feed
 @app.route("/rss", methods=["GET"])
 def fetch_movies():
