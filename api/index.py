@@ -71,7 +71,7 @@ def home():
 def fetch_movies():
     movie_list, movie_details = tamilmv()
     return jsonify({
-        "details": movie_details
+        "details": movie_details,
         "movies": movie_list
     })
 
