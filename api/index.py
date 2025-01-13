@@ -1,4 +1,4 @@
-from flask import Flask, Response
+from flask import Flask, Response, jsonify
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
