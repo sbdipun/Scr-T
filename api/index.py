@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 import requests
 from bs4 import BeautifulSoup
 
+# Create Flask app
 app = Flask(__name__)
 
 # Function to scrape movies from TamilMV
@@ -55,7 +56,7 @@ def get_movie_details(url):
     except Exception as e:
         return {"error": str(e)}
 
-# Routes
+# Define routes
 @app.route("/")
 def home():
     return jsonify({"message": "Welcome to Flask on Vercel!"})
@@ -68,11 +69,10 @@ def fetch_movies():
         "details": movie_details
     })
 
-# Vercel handler
-def handler(request, *args, **kwargs):
-    from werkzeug.middleware.dispatcher import DispatcherMiddleware
-    from werkzeug.serving import run_simple
+# Vercel handler (required)
+from flask import Request as VercelRequest
+from flask import Response as VercelResponse
 
-    app.wsgi_app = DispatcherMiddleware(None, {'/': app})
-    run_simple('0.0.0.0', 3000, app)
-
+def handler(vercel_request: VercelRequest) -> VercelResponse:
+    with app.request_context(environ=vercel_request.environ):
+        return app.full_dispatch_request()
