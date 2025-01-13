@@ -60,8 +60,8 @@ def get_movie_details(url):
             movie_details.append({
                 "title": html.escape(movie_title),
                 "size": size,
-                "magnet_link": mag[p],
-                "torrent_file_link": filelink[p] if p < len(filelink) else None
+                "magnet_link": html.escape(mag[p]),
+                "torrent_file_link": html.escape(filelink[p]) if p < len(filelink) else None
             })
 
         return movie_details
@@ -106,4 +106,4 @@ def fetch_movies():
 # Run the Flask app
 if __name__ == "__main__":
     app.run(debug=True)
-        
+    
