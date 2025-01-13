@@ -90,9 +90,9 @@ def home():
 def fetch_movies():
     movie_details = tamilmv()
 
-    # Generate RSS XML
+    # Generate RSS XML with the proper atom namespace
     rss_feed = """<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
     <title>TamilMV Latest Movies</title>
     <link>{base_url}</link>
