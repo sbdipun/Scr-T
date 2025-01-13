@@ -34,22 +34,29 @@ def tamilmv():
 
     return real_dict
 
+# Function to get movie details
 def get_movie_details(url):
     try:
-        # Ensure the URL is properly formatted
-        if not url.startswith('https://'):
-            url = urljoin(BASE_URL, url)  # Use urljoin to construct the full URL
-
         html = requests.get(url, timeout=10)
         html.raise_for_status()
         soup = BeautifulSoup(html.text, 'lxml')
 
+        # Extract all magnet and torrent links
         mag = [a['href'] for a in soup.find_all('a', href=True) if 'magnet:' in a['href']]
         filelink = [a['href'] for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
+
+        # Movie title extraction (from <h1> tag or 'dn' parameter in the magnet link)
         movie_title = soup.find('h1').text.strip() if soup.find('h1') else "Unknown Title"
 
         movie_details = []
+        
         for p in range(len(mag)):
+            # Parse the 'dn' parameter in the magnet link if available
+            query_params = urllib.parse.parse_qs(urllib.parse.urlparse(mag[p]).query)
+            if 'dn' in query_params:
+                title_encoded = query_params['dn'][0]  # Get the first value of 'dn'
+                movie_title = urllib.parse.unquote(title_encoded)  # Decode the URL-encoded title
+
             movie_details.append({
                 "title": movie_title,
                 "magnet_link": mag[p],
