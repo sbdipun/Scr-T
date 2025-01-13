@@ -1,4 +1,4 @@
-from flask import Flask, Response, request
+from flask import Flask, Response
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
@@ -14,26 +14,18 @@ def tamilmv():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
     }
-    
+
     real_dict = {}
-    
     web = requests.get(BASE_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
     # Find all the movie elements
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
 
-    # If no movies are found, return an empty dictionary
-    if len(temps) < 21:
-        return {}
-
-    # Reverse the list to get the latest posts on top
-    temps = temps[::-1]
-
-    for i in range(21):
-        title = temps[i].findAll('a')[0].text.strip()
-        link = temps[i].find('a')['href']
-        
+    # Extract movie details in the correct order
+    for temp in temps:
+        title = temp.find('a').text.strip()
+        link = temp.find('a')['href']
         movie_details = get_movie_details(link)
         real_dict[title] = movie_details
 
@@ -49,15 +41,12 @@ def get_movie_details(url):
         html.raise_for_status()
         soup = BeautifulSoup(html.text, 'lxml')
 
-        # Extract all magnet and torrent links
         mag = [a['href'] for a in soup.find_all('a', href=True) if 'magnet:' in a['href']]
         filelink = [a['href'] for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
 
-        # Movie title extraction
         movie_title = soup.find('h1').text.strip() if soup.find('h1') else "Unknown Title"
 
         movie_details = []
-
         for p in range(len(mag)):
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(mag[p]).query)
             if 'dn' in query_params:
@@ -80,16 +69,15 @@ def fetch_movies():
     movie_details = tamilmv()
 
     # Generate RSS XML
-    rss_feed = """<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+    rss_feed = """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<rss version=\"2.0\">
 <channel>
     <title>TamilMV Latest Movies</title>
     <link>{base_url}</link>
     <description>Latest movies from TamilMV</description>
 """.format(base_url=BASE_URL)
 
-    # Reverse the movie details to ensure latest items appear at the top
-    for title, details in reversed(movie_details.items()):
+    for title, details in movie_details.items():
         for detail in details:
             rss_feed += f"""
     <item>
@@ -104,7 +92,6 @@ def fetch_movies():
 </rss>
 """
 
-    # Return the RSS feed
     return Response(rss_feed, mimetype='application/rss+xml')
 
 # Run the Flask app
