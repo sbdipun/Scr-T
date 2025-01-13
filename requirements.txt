@@ -1,8 +1,8 @@
-Flask==2.2.2 
+Flask
 requests
 beautifulsoup4
 lxml
 pybase64
 regex
-Werkzeug==2.2.2
-gunicorn==20.1.0
+Werkzeug
+gunicorn
