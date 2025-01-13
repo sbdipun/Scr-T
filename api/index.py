@@ -8,7 +8,7 @@ app = Flask(__name__)
 from urllib.parse import urljoin
 
 # Base URL
-BASE_URL = 'https://www.1tamilmv.legal/'
+BASE_URL = 'https://www.1tamilmv.app/'
 
 # Function to scrape movies
 def tamilmv():
