@@ -69,9 +69,8 @@ def home():
 
 @app.route("/fetch_movies", methods=["GET"])
 def fetch_movies():
-    movie_list, movie_details = tamilmv()
+    movie_details = tamilmv()
     return jsonify({
-        "movies": movie_list,
         "details": movie_details
     })
 
