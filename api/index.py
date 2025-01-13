@@ -74,7 +74,7 @@ def fetch_movies():
 <channel>
     <title>TamilMV Latest Movies</title>
     <link>{base_url}</link>
-    <description>Latest movies from TamilMV</description>
+    <description>Latest movies from TamilMV!! Made By Mr. Shaw</description>
 """.format(base_url=BASE_URL)
 
     for title, details in movie_details.items():
@@ -83,7 +83,7 @@ def fetch_movies():
     <item>
         <title>{detail['title']}</title>
         <link>{detail['magnet_link']}</link>
-        <description>Download link: {detail['torrent_file_link']}</description>
+        <description>Torrent File: {detail['torrent_file_link']}</description>
     </item>
 """
 
