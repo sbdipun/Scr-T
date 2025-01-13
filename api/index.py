@@ -69,10 +69,6 @@ def fetch_movies():
         "details": movie_details
     })
 
-# Vercel handler (required)
-from flask import Request as VercelRequest
-from flask import Response as VercelResponse
-
-def handler(vercel_request: VercelRequest) -> VercelResponse:
-    with app.request_context(environ=vercel_request.environ):
-        return app.full_dispatch_request()
+# Expose the app as `app`
+if __name__ == "__main__":
+    app.run()
