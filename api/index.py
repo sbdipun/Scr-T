@@ -22,10 +22,9 @@ def tamilmv():
         soup = BeautifulSoup(web.text, 'lxml')
 
         temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
-        for i in range(min(21, len(temps))):
+        for i in range(21):
             title = temps[i].find_all('a')[0].text.strip()
-            relative_link = temps[i].find('a')['href']
-            link = urljoin(BASE_URL, relative_link)  # Convert to absolute URL
+            link = temps[i].find('a')['href'] # Convert to absolute URL
 
             # Fetch movie details for each link
             movie_details = get_movie_details(link)
