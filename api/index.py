@@ -1,21 +1,19 @@
 from flask import Flask, jsonify, request
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 # Create Flask app
 app = Flask(__name__)
 
-from urllib.parse import urljoin
-
 # Base URL
 BASE_URL = 'https://www.1tamilmv.app/'
 
-# Function to scrape movies
+# Function to scrape movie details
 def tamilmv():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
     }
-    movie_list = []
     real_dict = {}
 
     try:
@@ -28,15 +26,15 @@ def tamilmv():
             title = temps[i].find_all('a')[0].text.strip()
             relative_link = temps[i].find('a')['href']
             link = urljoin(BASE_URL, relative_link)  # Convert to absolute URL
-            movie_list.append(title)
 
+            # Fetch movie details for each link
             movie_details = get_movie_details(link)
             real_dict[title] = movie_details
 
     except requests.exceptions.RequestException as e:
-        return [], {"error": str(e)}
+        return {"error": str(e)}
 
-    return movie_list, real_dict
+    return real_dict
 
 # Function to get movie details
 def get_movie_details(url):
@@ -61,19 +59,15 @@ def get_movie_details(url):
     except Exception as e:
         return {"error": str(e)}
 
-
 # Define routes
 @app.route("/")
 def home():
-    return jsonify({"message": "Welcome to Flask on Vercel!"})
+    return jsonify({"message": "Welcome to TamilMV Scrapper Site!! Developed By Mr. Shaw"})
 
-@app.route("/fetch_movies", methods=["GET"])
+@app.route("/fetch", methods=["GET"])
 def fetch_movies():
-    movie_list, movie_details = tamilmv()
-    return jsonify({
-        "details": movie_details,
-        "movies": movie_list
-    })
+    movie_details = tamilmv()
+    return jsonify(movie_details)
 
 # Expose the app as `app`
 if __name__ == "__main__":
