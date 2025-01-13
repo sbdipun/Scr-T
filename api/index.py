@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
+import urllib.parse
 
 # Create Flask app
 app = Flask(__name__)
