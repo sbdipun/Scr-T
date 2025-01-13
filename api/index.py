@@ -76,6 +76,10 @@ def get_movie_details(url):
     except Exception as e:
         return {"error": str(e)}
 
+# Function to escape special characters in URLs (like & to &amp;)
+def escape_xml(text):
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&apos;")
+
 # Define routes
 @app.route("/")
 def home():   
@@ -87,8 +91,8 @@ def fetch_movies():
     movie_details = tamilmv()
 
     # Generate RSS XML
-    rss_feed = """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<rss version=\"2.0\">
+    rss_feed = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
 <channel>
     <title>TamilMV Latest Movies</title>
     <link>{base_url}</link>
@@ -99,9 +103,9 @@ def fetch_movies():
         for detail in movie["details"]:
             rss_feed += f"""
     <item>
-        <title>{detail['title']}</title>
-        <link>{detail['magnet_link'].replace('&', '&amp;')}</link>
-        <description>Size: {detail['size']}, Torrent File: {detail['torrent_file_link']}</description>
+        <title>{escape_xml(detail['title'])}</title>
+        <link>{escape_xml(detail['magnet_link'])}</link>
+        <description>Size: {escape_xml(detail['size'])}, Torrent File: {escape_xml(detail['torrent_file_link'])}</description>
     </item>
 """
 
