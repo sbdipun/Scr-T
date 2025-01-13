@@ -2,6 +2,7 @@ from flask import Flask, Response, jsonify
 import requests
 from bs4 import BeautifulSoup
 import urllib.parse
+import re
 
 # Create Flask app
 app = Flask(__name__)
@@ -53,8 +54,13 @@ def get_movie_details(url):
                 title_encoded = query_params['dn'][0]
                 movie_title = urllib.parse.unquote(title_encoded)
 
+                # Extract size from the dn parameter
+                size_match = re.search(r'(\d+(\.\d+)?\s?(GB|MB|TB))', movie_title)
+                size = size_match.group(1) if size_match else "Unknown"
+
             movie_details.append({
                 "title": movie_title,
+                "size": size,
                 "magnet_link": mag[p],
                 "torrent_file_link": filelink[p] if p < len(filelink) else None
             })
@@ -68,7 +74,6 @@ def get_movie_details(url):
 def home():   
     return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
 
-    
 # Route to display RSS feed
 @app.route("/rss", methods=["GET"])
 def fetch_movies():
@@ -89,7 +94,7 @@ def fetch_movies():
     <item>
         <title>{detail['title']}</title>
         <link>{detail['magnet_link']}</link>
-        <description>Torrent File: {detail['torrent_file_link']}</description>
+        <description>Size: {detail['size']}, Torrent File: {detail['torrent_file_link']}</description>
     </item>
 """
 
