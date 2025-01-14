@@ -40,10 +40,12 @@ def scrape_links():
                 magnet_link = magnet_link_tag['href']
                 query_params = re.search(r'dn=([^&]+)', magnet_link)
                 title = query_params.group(1) if query_params else 'No Title'
+                 # Decode the URL-encoded title
+                decoded_title = urllib.parse.unquote(title)
 
-                # Extract size from the title (e.g., "250MB" in the title)
-                size_match = re.search(r'(\d+\.?\d*MB|\d+\.?\d*GB)', title)
-                size = size_match.group(1) if size_match else 'Unknown Size'
+                # Extract size from the title (e.g., "250MB" or "2.5GB" in the title)
+                size_match = re.search(r'(\d+(\.\d+)?\s?(MB|GB))', title, re.IGNORECASE)
+                size = size_match.group(0) if size_match else 'Unknown Size'
 
                 description = f"Size: {size}, mag link: {magnet_link}"
 
@@ -51,7 +53,7 @@ def scrape_links():
                 safe_description = html.escape(description)
 
                 results.append({
-                    "title": title,
+                    "title": decoded_title,
                     "magnet_link": magnet_link,
                     "description": safe_description,
                     "size": size,
