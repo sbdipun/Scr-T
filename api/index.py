@@ -38,24 +38,23 @@ def scrape_links():
 
             if magnet_link_tag and 'href' in magnet_link_tag.attrs:
                 magnet_link = magnet_link_tag['href']
-                query_params = parse_qs(urlparse(magnet_link).query)
-                title = query_params.get('dn', ['No Title'])[0]
+                query_params = re.search(r'dn=([^&]+)', magnet_link)
+                title = query_params.group(1) if query_params else 'No Title'
 
                 # Extract size from the title (e.g., "250MB" in the title)
                 size_match = re.search(r'(\d+\.?\d*MB|\d+\.?\d*GB)', title)
                 size = size_match.group(1) if size_match else 'Unknown Size'
 
                 description = f"Size: {size}, mag link: {magnet_link}"
-                
-                # Escape the magnet link for XML compatibility (replace problematic characters)
-                safe_magnet_link = quote_plus(magnet_link)
+
+                # Escape only special characters needed for XML
+                safe_description = html.escape(description)
 
                 results.append({
                     "title": title,
                     "magnet_link": magnet_link,
-                    "description": description,
+                    "description": safe_description,
                     "size": size,
-                    "safe_magnet_link": safe_magnet_link
                 })
         return results
     except requests.exceptions.RequestException as e:
@@ -77,8 +76,8 @@ def rss():
     for item in data:
         rss_items += f"""
             <item>
-                <title>{item['title']}</title>
-                <link>{item['safe_magnet_link']}</link>
+                <title>{html.escape(item['title'])}</title>
+                <link>{html.escape(item['magnet_link'])}</link>
                 <description>{item['description']}</description>
             </item>
         """
