@@ -7,3 +7,4 @@ regex
 Werkzeug
 gunicorn
 apscheduler
+httpx
