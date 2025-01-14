@@ -1,80 +1,44 @@
 from flask import Flask, jsonify
 import requests
-from bs4 import BeautifulSoup
+from lxml import html
 
 app = Flask(__name__)
 
-# Function to scrape movie details
-def fetch_movies():
-    url = "https://www.1tamilmv.re/"  # Change this if necessary
+# Define a function to scrape the required content
+def scrape_movies():
+    url = 'https://www.1tamilmv.re/'  # Replace with the actual URL
 
-    # Send a request to the website
+    # Send GET request
     response = requests.get(url)
 
-    # Use lxml parser with BeautifulSoup
-    soup = BeautifulSoup(response.text, 'lxml')
+    # Parse the page content using lxml
+    tree = html.fromstring(response.content)
 
-    # Debugging: Print the first part of the raw HTML to inspect the structure
-    print(soup.prettify()[:1000])  # Prints first 1000 characters of prettified HTML
+    # Find all <div> tags with the class 'ipsType_break ipsContained'
+    div_elements = tree.xpath("//div[@class='ipsType_break ipsContained']")
 
-    # Find all <li> elements with the class 'ipsDataItem' (all topics)
-    li_elements = soup.find_all('li', class_='ipsDataItem')
+    # Extract and return the content inside those <div> tags
+    movies = []
+    for div in div_elements:
+        movie_title = div.text_content().strip()  # Get the clean text inside the <div>
+        if movie_title:  # Only add non-empty titles
+            movies.append(movie_title)
 
-    # Debugging: Check how many topics were found
-    print(f"Found {len(li_elements)} topic elements.")
-    
-    topic_urls = []
-    for li in li_elements:
-        topic_link = li.find('a', class_='ipsDataItem_title')
-        if topic_link:
-            topic_urls.append(topic_link['href'])
-    
-    print(f"Found {len(topic_urls)} topic URLs.")
+    return movies
 
-    results = []
-
-    # Scrape each topic URL one by one
-    for topic_url in topic_urls:
-        topic_response = requests.get(topic_url)
-        topic_soup = BeautifulSoup(topic_response.text, 'lxml')
-
-        # Find all <a> elements with data-fileext="torrent" (magnet links)
-        torrent_links = topic_soup.find_all('a', attrs={'data-fileext': 'torrent'})
-
-        for torrent_link in torrent_links:
-            magnet_link = torrent_link['href']
-            title = torrent_link.find('span')
-            if title:
-                title_text = title.get_text(strip=True)
-                title_text = title_text.replace('.torrent', '').strip()
-
-                results.append({
-                    'Title': title_text,
-                    'Magnet Link': magnet_link
-                })
-
-    return results
-
-
-@app.route("/")
+# Define the route for the home page
+@app.route('/')
 def home():
-    return "Welcome to the Tamil Movie Scraper API!"
+    return 'Welcome to the Movie Scraper API!'
 
-@app.route("/rss", methods=["GET"])
+# Define the route to get the movies
+@app.route('/movies', methods=['GET'])
 def get_movies():
-    try:
-        # Fetch movies
-        movies = fetch_movies()
-        
-        # Debugging: Log the HTML content to see if we're scraping correctly
-        print(movies)
-        
-        if not movies:
-            return jsonify({"error": "No movies found."}), 404
-        return jsonify({"movies": movies})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    movies = scrape_movies()
+    if movies:
+        return jsonify({'movies': movies})
+    else:
+        return jsonify({'error': 'No movies found.'}), 404
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
