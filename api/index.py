@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, Response
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import parse_qs, urlparse, quote
 import re
+import html
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -47,7 +47,7 @@ def scrape_links():
                 description = f"Size: {size}, mag link: {magnet_link}"
                 
                 # Escape the magnet link for XML compatibility
-                safe_magnet_link = quote(magnet_link, safe=":/?&=")
+                safe_magnet_link = html.escape(magnet_link)
 
                 results.append({
                     "title": title,
