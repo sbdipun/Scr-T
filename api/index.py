@@ -10,71 +10,69 @@ app = Flask(__name__)
 # Base URL
 BASE_URL = 'https://www.1tamilmv.re'
 
-# Function to scrape movie details
 def tamilmv():
+    mainUrl = 'https://www.1tamilmv.ac/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
     }
 
-    web = requests.get(BASE_URL, headers=headers)
+    movie_list = []
+    real_dict = {}
+
+    web = requests.get(mainUrl, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
-    # Find all the movie elements
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
 
-    real_list = []
+    if len(temps) < 21:
+        return [], {}
 
-    for temp in temps:
-        title = temp.find('a').text.strip()
-        link = temp.find('a')['href']
+    for i in range(21):
+        title = temps[i].findAll('a')[0].text.strip()
+        link = temps[i].find('a')['href']
+        movie_list.append(title)
+
         movie_details = get_movie_details(link)
-        real_list.append({"title": title, "details": movie_details})
+        real_dict[title] = movie_details
 
-    return real_list
+    return movie_list, real_dict
 
-# Function to get movie details
+
 def get_movie_details(url):
     try:
-        if not url.startswith(('http://', 'https://')):
-            url = urllib.parse.urljoin(BASE_URL, url)
-
-        html = requests.get(url, timeout=10)
-        html.raise_for_status()
+        html = requests.get(url)
         soup = BeautifulSoup(html.text, 'lxml')
 
         mag = [a['href'] for a in soup.find_all('a', href=True) if 'magnet:' in a['href']]
         filelink = [a['href'] for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
 
+        movie_details = []
         movie_title = soup.find('h1').text.strip() if soup.find('h1') else "Unknown Title"
 
-        movie_details = []
         for p in range(len(mag)):
+            # Extract size from the dn parameter in the magnet link
             query_params = urllib.parse.parse_qs(urllib.parse.urlparse(mag[p]).query)
+            size = "Unknown"
             if 'dn' in query_params:
                 title_encoded = query_params['dn'][0]
                 movie_title = urllib.parse.unquote(title_encoded)
 
-                # Extract size from the dn parameter
+                # Use regex to extract size (e.g., 2.7GB or 700MB)
                 size_match = re.search(r'(\d+(\.\d+)?\s?(GB|MB|TB))', movie_title)
-                size = size_match.group(1) if size_match else "Unknown"
-
-            # Fix the torrent file link
-            torrent_link = filelink[p] if p < len(filelink) else None
-            if torrent_link:
-                torrent_link = torrent_link.replace("http:/", "https://")
-                if not torrent_link.startswith('https://'):
-                    torrent_link = urllib.parse.urljoin(BASE_URL, torrent_link)
+                if size_match:
+                    size = size_match.group(1)
 
             movie_details.append({
                 "title": movie_title,
                 "size": size,
                 "magnet_link": mag[p],
-                "torrent_file_link": torrent_link
+                "torrent_file_link": filelink[p] if p < len(filelink) else None
             })
 
         return movie_details
     except Exception as e:
         return {"error": str(e)}
+
 
 # Function to escape special characters in URLs (like & to &amp;)
 def escape_xml(text):
