@@ -40,8 +40,8 @@ def scrape_links():
                 query_params = parse_qs(urlparse(magnet_link).query)
                 title = query_params.get('dn', ['No Title'])[0]
 
-                # Extract size from the title (e.g., "Movie Title (Size: 1.5 GB)")
-                size_match = re.search(r'\(([^)]+)\)', title)
+                # Extract size from the title (e.g., "250MB" in the title)
+                size_match = re.search(r'(\d+\.?\d*MB|\d+\.?\d*GB)', title)
                 size = size_match.group(1) if size_match else 'Unknown Size'
 
                 description = f"Size: {size}, mag link: {magnet_link}"
@@ -54,7 +54,7 @@ def scrape_links():
 # Home Route - Returns JSON
 @app.route("/")
 def home():   
-    return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
+    return jsonify({"message": "Welcome to TamilBlasters RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
 
 # RSS Route - Returns XML
 @app.route('/rss')
