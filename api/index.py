@@ -11,7 +11,6 @@ app = Flask(__name__)
 BASE_URL = 'https://www.1tamilmv.re'
 
 def tamilmv():
-    mainUrl = 'https://www.1tamilmv.re/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
     }
@@ -19,7 +18,7 @@ def tamilmv():
     movie_list = []
     real_dict = {}
 
-    web = requests.get(mainUrl, headers=headers)
+    web = requests.get(BASE_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
 
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
