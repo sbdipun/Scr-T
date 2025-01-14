@@ -40,12 +40,8 @@ def scrape_links():
                 query_params = parse_qs(urlparse(magnet_link).query)
                 title = query_params.get('dn', ['No Title'])[0]
 
-                # Extract size from the title (e.g., "Movie Title (Size: 1.5 GB)")
-                size_match = re.search(r'\(([^)]+)\)', title)
-                size = size_match.group(1) if size_match else 'Unknown Size'
-
-                description = f"Size: {size}, mag link: {magnet_link}"
-                results.append({"title": title, "magnet_link": magnet_link, "description": description, "size": size})
+                description = f"mag link: {magnet_link}"
+                results.append({"title": title, "magnet_link": magnet_link, "description": description})
         return results
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
