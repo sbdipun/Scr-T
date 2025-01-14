@@ -1,84 +1,106 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template_string, Response
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import parse_qs, urlparse
 
+# Initialize Flask app
 app = Flask(__name__)
 
-# Define a function to get the movie details from the given link
-def get_movie_details(movie_url):
-    # Send GET request with headers
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
-    }
-    
-    # Fetch the movie page content
-    response = requests.get(movie_url, headers=headers)
-    soup = BeautifulSoup(response.text, 'lxml')
-    
-    # You can extract specific movie details here (for example, genre, release date, etc.)
-    # Adjust according to the actual page structure
-    details = soup.find_all('div', {'class': 'some_detail_class'})  # Change this to actual class or tag
-    
-    # Extract relevant details from the page (example)
-    movie_details = {}
-    for detail in details:
-        # Assuming the details are stored in some structured way
-        detail_title = detail.find('span', {'class': 'some_class'}).text.strip()  # Adjust based on actual content
-        movie_details[detail_title] = detail.text.strip()
-    
-    return movie_details
+# Base URL to scrape
+base_url = "https://www.1tamilblasters.party/"
 
-# Define a function to scrape movie listings
-def scrape_movies():
-    mainUrl = 'https://www.1tamilmv.re/'  # Replace with the actual URL
+# Headers for requests
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+}
 
-    # Send GET request with headers
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
-    }
-    
-    # Initialize movie list and details dictionary
-    movie_list = []
-    real_dict = {}
-    
-    # Request the main page
-    web = requests.get(mainUrl, headers=headers)
-    soup = BeautifulSoup(web.text, 'lxml')
+# Function to scrape latest links and magnet links
+def scrape_links():
+    try:
+        response = requests.get(base_url, headers=headers, timeout=10)
+        response.raise_for_status()
 
-    # Find the movie elements (adjust the class based on actual structure)
-    temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
-    
-    # If there are less than 21 movie entries, return empty
-    if len(temps) < 21:
-        return [], {}
+        if 'text/html' in response.headers['Content-Type']:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            divs = soup.find_all('div', class_='ipsType_break ipsContained')
 
-    # Iterate through the movie elements and extract titles and links
-    for i in range(21):
-        title = temps[i].find_all('a')[0].text.strip()  # Get the movie title
-        link = temps[i].find('a')['href']  # Get the movie link
-        movie_list.append(title)
-        
-        # Get the details for each movie
-        movie_details = get_movie_details(link)
-        real_dict[title] = movie_details
+            # Limit to 25-30 links
+            links = []
+            for div in divs[:30]:
+                link_tag = div.find('a')
+                if link_tag and 'href' in link_tag.attrs:
+                    links.append(link_tag['href'])
 
-    return movie_list, real_dict
+            results = []
+            for link in links:
+                sub_response = requests.get(link, headers=headers, timeout=10)
+                sub_response.raise_for_status()
 
-# Define the route to get the movie listings
-@app.route('/movies', methods=['GET'])
-def get_movies():
-    movie_list, real_dict = scrape_movies()
-    
-    # Check if any movies were found
-    if movie_list:
-        return jsonify({'movies': movie_list, 'movie_details': real_dict})
-    else:
-        return jsonify({'error': 'No movies found.'}), 404
+                sub_soup = BeautifulSoup(sub_response.text, 'html.parser')
+                magnet_link_tag = sub_soup.find('a', class_='magnet-plugin')
 
-# Define the home route
+                if magnet_link_tag and 'href' in magnet_link_tag.attrs:
+                    magnet_link = magnet_link_tag['href']
+                    query_params = parse_qs(urlparse(magnet_link).query)
+                    title = query_params.get('dn', ['No Title'])[0]
+                    results.append({"title": title, "magnet_link": magnet_link})
+            return results
+        else:
+            return []
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
+        return []
+
+# Home Route
 @app.route('/')
 def home():
-    return 'Welcome to the Movie Scraper API!'
+    scraped_data = scrape_links()
+    html_template = '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Scraped Links</title>
+    </head>
+    <body>
+        <h1>Latest Titles and Magnet Links</h1>
+        <ul>
+            {% for item in scraped_data %}
+            <li>
+                <strong>{{ item.title }}</strong><br>
+                <a href="{{ item.magnet_link }}">Magnet Link</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </body>
+    </html>
+    '''
+    return render_template_string(html_template, scraped_data=scraped_data)
 
+# RSS Route
+@app.route('/rss')
+def rss():
+    scraped_data = scrape_links()
+    rss_feed = '''<?xml version="1.0" encoding="UTF-8" ?>
+    <rss version="2.0">
+        <channel>
+            <title>Latest Titles and Magnet Links</title>
+            <link>{base_url}</link>
+            <description>RSS feed of the latest titles and magnet links</description>
+    '''
+    for item in scraped_data:
+        rss_feed += f'''
+            <item>
+                <title>{item["title"]}</title>
+                <link>{item["magnet_link"]}</link>
+                <description>{item["title"]}</description>
+            </item>
+        '''
+    rss_feed += '''
+        </channel>
+    </rss>
+    '''
+    return Response(rss_feed, content_type='application/rss+xml')
+
+# Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
