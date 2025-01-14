@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template_string, Response
+from flask import Flask, jsonify, request
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import parse_qs, urlparse
@@ -14,7 +14,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
 }
 
-# Function to scrape latest links and magnet links
+# Function to scrape the latest 25-30 links and magnet links
 def scrape_links():
     try:
         response = requests.get(base_url, headers=headers, timeout=10)
@@ -51,55 +51,17 @@ def scrape_links():
         print(f"Request failed: {e}")
         return []
 
-# Home Route
-@app.route('/')
-def home():
-    scraped_data = scrape_links()
-    html_template = '''
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Scraped Links</title>
-    </head>
-    <body>
-        <h1>Latest Titles and Magnet Links</h1>
-        <ul>
-            {% for item in scraped_data %}
-            <li>
-                <strong>{{ item.title }}</strong><br>
-                <a href="{{ item.magnet_link }}">Magnet Link</a>
-            </li>
-            {% endfor %}
-        </ul>
-    </body>
-    </html>
-    '''
-    return render_template_string(html_template, scraped_data=scraped_data)
+# Route 1: Home - Returns JSON data
+@app.route("/")
+def home():   
+    return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
+    
 
-# RSS Route
+# Route 2: RSS (JSON format)
 @app.route('/rss')
 def rss():
-    scraped_data = scrape_links()
-    rss_feed = '''<?xml version="1.0" encoding="UTF-8" ?>
-    <rss version="2.0">
-        <channel>
-            <title>Latest Titles and Magnet Links</title>
-            <link>{base_url}</link>
-            <description>RSS feed of the latest titles and magnet links</description>
-    '''
-    for item in scraped_data:
-        rss_feed += f'''
-            <item>
-                <title>{item["title"]}</title>
-                <link>{item["magnet_link"]}</link>
-                <description>{item["title"]}</description>
-            </item>
-        '''
-    rss_feed += '''
-        </channel>
-    </rss>
-    '''
-    return Response(rss_feed, content_type='application/rss+xml')
+    data = scrape_links()
+    return jsonify(data)
 
 # Run the Flask app
 if __name__ == '__main__':
