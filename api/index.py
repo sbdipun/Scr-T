@@ -13,35 +13,33 @@ headers = {
 # Function to fetch the topic URLs from the main page
 def fetch_topic_urls():
     BASE_URL = 'https://www.1tamilmv.re/'
-    response = requests.get(BASE_URL, headers=headers)
+    
+    try:
+        response = requests.get(BASE_URL, headers=headers)
 
-    if response.status_code != 200:
-        print(f"Failed to retrieve the page. Status code: {response.status_code}")
+        # Check for response status code
+        if response.status_code != 200:
+            print(f"Failed to retrieve the page. Status code: {response.status_code}")
+            return []
+
+        print("Page fetched successfully.")
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        li_elements = soup.find_all('li', class_='ipsDataItem')
+        print(f"Found {len(li_elements)} topic elements.")
+
+        topic_urls = []
+        for li in li_elements:
+            topic_link = li.find('a', class_='ipsDataItem_title')
+            if topic_link:
+                topic_urls.append(topic_link['href'])
+
+        return topic_urls
+
+    except requests.exceptions.RequestException as e:
+        # Log the error if the request fails
+        print(f"Error occurred: {e}")
         return []
-
-    print("Page fetched successfully.")
-
-    # Log the first 500 characters of the page content for debugging
-    print(response.text[:500])
-
-    # Parse HTML using BeautifulSoup
-    soup = BeautifulSoup(response.text, 'html.parser')
-
-    # Log the title to check if we're parsing the correct page
-    print(f"Page Title: {soup.title.string}")
-
-    # Check for the <li> elements again
-    li_elements = soup.find_all('li', class_='ipsDataItem')
-    print(f"Found {len(li_elements)} topic elements.")
-
-    # Extract all topic URLs and store them in a list
-    topic_urls = []
-    for li in li_elements:
-        topic_link = li.find('a', class_='ipsDataItem_title')
-        if topic_link:
-            topic_urls.append(topic_link['href'])
-
-    return topic_urls
 
 # Route to fetch movies (topic URLs)
 @app.route("/movies", methods=["GET"])
@@ -52,7 +50,6 @@ def get_movies():
         return jsonify({"error": "No movie listings found. The page structure might have changed."}), 404
 
     return jsonify({"movies": topic_urls})
-
 
 if __name__ == "__main__":
     app.run(debug=True)
