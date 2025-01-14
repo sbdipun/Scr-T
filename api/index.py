@@ -121,7 +121,7 @@ def fetch_rss_feed():
 
 # Run the scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(update_feed, 'interval', minutes=15)
+scheduler.add_job(update_feed, 'interval', minutes=2)
 scheduler.start()
 
 # Run the Flask app
