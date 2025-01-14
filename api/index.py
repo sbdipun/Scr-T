@@ -1,13 +1,12 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 
 # Create Flask app
 app = Flask(__name__)
 
-from urllib.parse import urljoin
-
-# Base URL
+# Base URL of the website to scrape
 BASE_URL = 'https://www.1tamilmv.re/'
 
 # Function to scrape movies
@@ -19,19 +18,20 @@ def tamilmv():
     real_dict = {}
 
     try:
-        web = requests.get(BASE_URL, headers=headers, timeout=10)
-        web.raise_for_status()
-        soup = BeautifulSoup(web.text, 'lxml')
+        # Make the request to the main URL
+        response = requests.get(BASE_URL, headers=headers, timeout=10)
+        response.raise_for_status()  # Check for request errors
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-        temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
-        for i in range(min(21, len(temps))):
-            title = temps[i].find_all('a')[0].text.strip()
-            relative_link = temps[i].find('a')['href']
-            link = urljoin(BASE_URL, relative_link)  # Convert to absolute URL
-            movie_list.append(title)
+        # Scrape movie titles and links
+        li_elements = soup.find_all('li', class_='ipsDataItem')
+        topic_urls = [urljoin(BASE_URL, li.find('a', class_='ipsDataItem_title')['href']) for li in li_elements]
 
-            movie_details = get_movie_details(link)
-            real_dict[title] = movie_details
+        # Iterate over each topic URL to get details
+        for topic_url in topic_urls:
+            topic_details = get_movie_details(topic_url)
+            movie_list.append(topic_url)
+            real_dict[topic_url] = topic_details
 
     except requests.exceptions.RequestException as e:
         return [], {"error": str(e)}
@@ -41,31 +41,36 @@ def tamilmv():
 # Function to get movie details
 def get_movie_details(url):
     try:
-        html = requests.get(url, timeout=10)
-        html.raise_for_status()
-        soup = BeautifulSoup(html.text, 'lxml')
+        # Fetch the movie detail page
+        topic_response = requests.get(url, timeout=10)
+        topic_response.raise_for_status()  # Check for request errors
+        topic_soup = BeautifulSoup(topic_response.text, 'html.parser')
 
-        mag = [a['href'] for a in soup.find_all('a', href=True) if 'magnet:' in a['href']]
-        filelink = [a['href'] for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
-        movie_title = soup.find('h1').text.strip() if soup.find('h1') else "Unknown Title"
-
+        # Find all magnet links
+        torrent_links = topic_soup.find_all('a', attrs={'data-fileext': 'torrent'})
         movie_details = []
-        for p in range(len(mag)):
-            movie_details.append({
-                "title": movie_title,
-                "magnet_link": mag[p],
-                "torrent_file_link": filelink[p] if p < len(filelink) else None
-            })
+
+        for torrent_link in torrent_links:
+            magnet_link = torrent_link['href']
+            
+            # Extract the title from the <span> tag and remove ".torrent"
+            title_tag = torrent_link.find('span')
+            if title_tag:
+                title = title_tag.get_text(strip=True).replace('.torrent', '').strip()
+
+                movie_details.append({
+                    'title': title,
+                    'magnet_link': magnet_link
+                })
 
         return movie_details
     except Exception as e:
         return {"error": str(e)}
 
-
 # Define routes
 @app.route("/")
 def home():
-    return jsonify({"message": "Welcome to Flask on Vercel!"})
+    return jsonify({"message": "Welcome to the Movie Scraper API!"})
 
 @app.route("/rss", methods=["GET"])
 def fetch_movies():
@@ -77,4 +82,4 @@ def fetch_movies():
 
 # Expose the app as `app`
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
