@@ -1,8 +1,7 @@
 from flask import Flask, jsonify
-import httpx
+import requests
 from bs4 import BeautifulSoup
 from urllib.parse import parse_qs, urlparse
-import asyncio
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -15,46 +14,35 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
 }
 
-# Function to scrape links asynchronously
-async def scrape_links():
-    async with httpx.AsyncClient(timeout=10) as client:
-        try:
-            response = await client.get(base_url, headers=headers)
-            response.raise_for_status()
-
-            soup = BeautifulSoup(response.text, 'html.parser')
-            divs = soup.find_all('div', class_='ipsType_break ipsContained')
-
-            # Limit to 10 links to prevent timeout
-            links = [div.find('a')['href'] for div in divs[:10] if div.find('a')]
-
-            results = []
-            tasks = [fetch_magnet_link(client, link) for link in links]
-            results = await asyncio.gather(*tasks)
-
-            return [result for result in results if result]
-        except httpx.RequestError as e:
-            print(f"Request failed: {e}")
-            return []
-
-# Function to fetch magnet link from each subpage
-async def fetch_magnet_link(client, link):
+# Function to scrape latest links and magnet links
+def scrape_links():
     try:
-        response = await client.get(link, headers=headers)
+        response = requests.get(base_url, headers=headers, timeout=10)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
-        magnet_link_tag = soup.find('a', class_='magnet-plugin')
+        divs = soup.find_all('div', class_='ipsType_break ipsContained')
 
-        if magnet_link_tag and 'href' in magnet_link_tag.attrs:
-            magnet_link = magnet_link_tag['href']
-            query_params = parse_qs(urlparse(magnet_link).query)
-            title = query_params.get('dn', ['No Title'])[0]
-            return {"title": title, "magnet_link": magnet_link}
-        return None
-    except httpx.RequestError as e:
-        print(f"Subpage request failed: {e}")
-        return None
+        # Limit to 10 links to prevent timeout
+        links = [div.find('a')['href'] for div in divs[:10] if div.find('a')]
+
+        results = []
+        for link in links:
+            sub_response = requests.get(link, headers=headers, timeout=10)
+            sub_response.raise_for_status()
+
+            sub_soup = BeautifulSoup(sub_response.text, 'html.parser')
+            magnet_link_tag = sub_soup.find('a', class_='magnet-plugin')
+
+            if magnet_link_tag and 'href' in magnet_link_tag.attrs:
+                magnet_link = magnet_link_tag['href']
+                query_params = parse_qs(urlparse(magnet_link).query)
+                title = query_params.get('dn', ['No Title'])[0]
+                results.append({"title": title, "magnet_link": magnet_link})
+        return results
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
+        return []
 
 # Home Route
 @app.route("/")
@@ -63,8 +51,8 @@ def home():
 
 # RSS Route
 @app.route('/rss')
-async def rss():
-    data = await scrape_links()
+def rss():
+    data = scrape_links()
     return jsonify(data)
 
 # Run the Flask app
