@@ -14,8 +14,8 @@
   ],
   "crons": [
     {
-      "path": "/api/cron",  // Path to your cron job function
-      "schedule": "*/20 * * * *"  // Runs every 20 minutes
+      "path": "/api/cron", 
+      "schedule": "*/20 * * * *"  
     }
   ]
 }
