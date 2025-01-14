@@ -2,6 +2,7 @@ from flask import Flask, jsonify, Response
 import requests
 from bs4 import BeautifulSoup
 import re
+from urllib.parse
 import html
 from urllib.parse import quote_plus, urlparse, quote, parse_qs
 
