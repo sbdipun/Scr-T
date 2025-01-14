@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, Response
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, quote
 import re
 
 # Initialize Flask app
@@ -45,7 +45,17 @@ def scrape_links():
                 size = size_match.group(1) if size_match else 'Unknown Size'
 
                 description = f"Size: {size}, mag link: {magnet_link}"
-                results.append({"title": title, "magnet_link": magnet_link, "description": description, "size": size})
+                
+                # Escape the magnet link for XML compatibility
+                safe_magnet_link = quote(magnet_link, safe=":/?&=")
+
+                results.append({
+                    "title": title,
+                    "magnet_link": magnet_link,
+                    "description": description,
+                    "size": size,
+                    "safe_magnet_link": safe_magnet_link
+                })
         return results
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
@@ -67,7 +77,7 @@ def rss():
         rss_items += f"""
             <item>
                 <title>{item['title']}</title>
-                <link>{item['magnet_link']}</link>
+                <link>{item['safe_magnet_link']}</link>
                 <description>{item['description']}</description>
             </item>
         """
