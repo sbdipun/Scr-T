@@ -5,10 +5,14 @@ from bs4 import BeautifulSoup
 # Create Flask app
 app = Flask(__name__)
 
-# Base URL of the website to scrape
+# ScraperAPI key and base URL
+API_KEY = '8180f4dd3446354d073fe5e4203bd064'  # Replace with your actual ScraperAPI key
 BASE_URL = 'https://www.1tamilmv.re/'
 
-# Function to scrape the movie listing page
+# ScraperAPI URL
+SCRAPERAPI_URL = 'https://api.scraperapi.com/'
+
+# Function to scrape the movie listing page using ScraperAPI
 def tamilmv():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
@@ -16,8 +20,12 @@ def tamilmv():
     results = []
 
     try:
-        # Fetch the main page and parse with BeautifulSoup
-        response = requests.get(BASE_URL, headers=headers, timeout=10)
+        # Set up ScraperAPI request to fetch the main page
+        params = {
+            'api_key': API_KEY,
+            'url': BASE_URL
+        }
+        response = requests.get(SCRAPERAPI_URL, headers=headers, params=params)
         response.raise_for_status()  # Raise an error if the request fails
         soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -40,13 +48,17 @@ def tamilmv():
 
     return results
 
-# Function to get details for each movie
+# Function to get details for each movie using ScraperAPI
 def get_movie_details(url):
     movie_details = []
 
     try:
-        # Fetch the movie page and parse with BeautifulSoup
-        topic_response = requests.get(url, timeout=10)
+        # Set up ScraperAPI request to fetch the topic page
+        params = {
+            'api_key': API_KEY,
+            'url': url
+        }
+        topic_response = requests.get(SCRAPERAPI_URL, params=params)
         topic_response.raise_for_status()  # Raise an error if the request fails
         topic_soup = BeautifulSoup(topic_response.text, 'html.parser')
 
