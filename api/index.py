@@ -8,7 +8,7 @@ import re
 app = Flask(__name__)
 
 # Base URL
-BASE_URL = 'https://www.1tamilmv.app/'
+BASE_URL = 'https://www.1tamilmv.app/index.php?/forums/forum/24-web-hd-itunes-hd-bluray/'
 
 # Function to scrape movie details
 def tamilmv():
