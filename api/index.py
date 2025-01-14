@@ -40,23 +40,26 @@ def scrape_links():
                 query_params = parse_qs(urlparse(magnet_link).query)
                 title = query_params.get('dn', ['No Title'])[0]
 
-                description = f"mag link: {magnet_link}"
-                results.append({"title": title, "magnet_link": magnet_link, "description": description})
+                # Extract size from the title (e.g., "Movie Title (Size: 1.5 GB)")
+                size_match = re.search(r'\(([^)]+)\)', title)
+                size = size_match.group(1) if size_match else 'Unknown Size'
+
+                description = f"Size: {size}, mag link: {magnet_link}"
+                results.append({"title": title, "magnet_link": magnet_link, "description": description, "size": size})
         return results
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
         return []
 
 # Home Route - Returns JSON
-@app.route('/')
-def home():
-    data = scrape_links()
-    return jsonify(data)
-
-# RSS Route - Returns XML
 @app.route("/")
 def home():   
-    return jsonify({"message": "Welcome to TamilBlasters RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
+    return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
+
+# RSS Route - Returns XML
+@app.route('/rss')
+def rss():
+    data = scrape_links()
 
     # Build the RSS XML feed
     rss_items = ""
