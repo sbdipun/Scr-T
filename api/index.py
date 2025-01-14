@@ -96,7 +96,7 @@ def home():
 # RSS route for the Flask API to fetch movie data
 @app.route("/rss", methods=["GET"])
 def fetch_movies():
-    movies = tamilmv()
+    movies = get_movie_detailsv()
     return jsonify({"movies": movies})
 
 # Expose the app to run
