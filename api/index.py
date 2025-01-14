@@ -3,16 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import re
-from apscheduler.schedulers.background import BackgroundScheduler
 
 # Create Flask app
 app = Flask(__name__)
 
 # Base URL
 BASE_URL = 'https://www.1tamilmv.app/'
-
-# Store the latest feed in a global variable
-latest_feed = ""
 
 # Function to scrape movie details
 def tamilmv():
@@ -47,7 +43,7 @@ def get_movie_details(url):
         soup = BeautifulSoup(html.text, 'lxml')
 
         mag = [a['href'] for a in soup.find_all('a', href=True) if 'magnet:' in a['href']]
-        filelink = [BASE_URL + a['href'].lstrip('/') for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
+        filelink = [a['href'] for a in soup.find_all('a', {"data-fileext": "torrent", 'href': True})]
 
         movie_title = soup.find('h1').text.strip() if soup.find('h1') else "Unknown Title"
 
@@ -62,27 +58,44 @@ def get_movie_details(url):
                 size_match = re.search(r'(\d+(\.\d+)?\s?(GB|MB|TB))', movie_title)
                 size = size_match.group(1) if size_match else "Unknown"
 
+            # Fix the torrent file link
+            torrent_link = filelink[p] if p < len(filelink) else None
+            if torrent_link:
+                torrent_link = torrent_link.replace("http:/", "https://")
+                if not torrent_link.startswith('https://'):
+                    torrent_link = urllib.parse.urljoin(BASE_URL, torrent_link)
+
             movie_details.append({
                 "title": movie_title,
                 "size": size,
                 "magnet_link": mag[p],
-                "torrent_file_link": filelink[p] if p < len(filelink) else None
+                "torrent_file_link": torrent_link
             })
 
         return movie_details
     except Exception as e:
         return {"error": str(e)}
 
-# Function to generate RSS feed
-def generate_rss_feed():
+# Function to escape special characters in URLs (like & to &amp;)
+def escape_xml(text):
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&apos;")
+
+# Define routes
+@app.route("/")
+def home():   
+    return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
+
+# Route to display RSS feed
+@app.route("/rss", methods=["GET"])
+def fetch_movies():
     movie_details = tamilmv()
 
-    rss_feed = """<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<rss version=\"2.0\">
+    # Generate RSS XML
+    rss_feed = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
 <channel>
     <title>TamilMV Latest Movies</title>
     <link>{base_url}</link>
-    <atom:link href="{base_url}rss" rel="self" type="application/rss+xml"/>
     <description>Latest movies from TamilMV!! Developed By Mr. Shaw</description>
 """.format(base_url=BASE_URL)
 
@@ -90,10 +103,9 @@ def generate_rss_feed():
         for detail in movie["details"]:
             rss_feed += f"""
     <item>
-        <title>{detail['title']}</title>
-        <link>{detail['magnet_link']}</link>
-        <description>Size: {detail['size']}, Torrent File: {detail['torrent_file_link']}</description>
-        <guid>{detail['magnet_link']}</guid>
+        <title>{escape_xml(detail['title'])}</title>
+        <link>{escape_xml(detail['magnet_link'])}</link>
+        <description>Size: {escape_xml(detail['size'])}, Torrent File: {escape_xml(detail['torrent_file_link'])}</description>
     </item>
 """
 
@@ -101,32 +113,11 @@ def generate_rss_feed():
 </channel>
 </rss>
 """
-    return rss_feed
 
-# Scheduled job to update the feed every 15 minutes
-def update_feed():
-    global latest_feed
-    latest_feed = generate_rss_feed()
-    print("RSS Feed Updated!")
-
-# Flask routes
-@app.route("/")
-def home():   
-    return jsonify({"message": "Welcome to TamilMV RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
-
-@app.route("/rss", methods=["GET"])
-def fetch_rss_feed():
-    global latest_feed
-    return Response(latest_feed, mimetype='application/rss+xml')
-
-# Run the scheduler
-scheduler = BackgroundScheduler()
-scheduler.add_job(update_feed, 'interval', minutes=2)
-scheduler.start()
+    return Response(rss_feed, mimetype='application/rss+xml')
 
 # Run the Flask app
 if __name__ == "__main__":
-    # Initial feed update before starting the app
-    update_feed()
     app.run(debug=True)
-                
+
+    
