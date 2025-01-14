@@ -20,11 +20,17 @@ def fetch_topic_urls():
         return []
 
     print("Page fetched successfully.")
-    
-    # Parse HTML using BeautifulSoup
-    soup = BeautifulSoup(response.text, 'lxml')
 
-    # Find all <li> elements with the class 'ipsDataItem' (all topics)
+    # Log the first 500 characters of the page content for debugging
+    print(response.text[:500])
+
+    # Parse HTML using BeautifulSoup
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Log the title to check if we're parsing the correct page
+    print(f"Page Title: {soup.title.string}")
+
+    # Check for the <li> elements again
     li_elements = soup.find_all('li', class_='ipsDataItem')
     print(f"Found {len(li_elements)} topic elements.")
 
@@ -34,17 +40,17 @@ def fetch_topic_urls():
         topic_link = li.find('a', class_='ipsDataItem_title')
         if topic_link:
             topic_urls.append(topic_link['href'])
-    
+
     return topic_urls
 
 # Route to fetch movies (topic URLs)
 @app.route("/movies", methods=["GET"])
 def get_movies():
     topic_urls = fetch_topic_urls()
-    
+
     if not topic_urls:
         return jsonify({"error": "No movie listings found. The page structure might have changed."}), 404
-    
+
     return jsonify({"movies": topic_urls})
 
 
