@@ -22,7 +22,7 @@ def fetch_topic_urls():
     print("Page fetched successfully.")
     
     # Parse HTML using BeautifulSoup
-    soup = BeautifulSoup(response.text, 'html.parser')
+    soup = BeautifulSoup(response.text, 'lxml')
 
     # Find all <li> elements with the class 'ipsDataItem' (all topics)
     li_elements = soup.find_all('li', class_='ipsDataItem')
