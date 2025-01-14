@@ -1,90 +1,94 @@
 from flask import Flask, jsonify
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 
-# Create Flask app
 app = Flask(__name__)
 
-# Base URL of the target website
-BASE_URL = 'https://www.1tamilmv.re/'
+# Define headers to mimic a real browser request
+headers = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br, zstd',
+    'Accept-Language': 'en-US,en;q=0.6',
+    'Cache-Control': 'max-age=0',
+    'Cookie': 'ips4_ipsTimezone=Asia/Calcutta; ips4_hasJS=true; ips4_IPSSessionFront=o6tqf6g5mqq1dsmbip2spoa9a8',
+    'If-Modified-Since': 'Tue, 14 Jan 2025 06:55:19 GMT',
+    'Priority': 'u=0, i',
+    'Referer': 'https://www.1tamilmv.re/',
+    'Sec-CH-UA': '"Brave";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+    'Sec-CH-UA-Mobile': '?0',
+    'Sec-CH-UA-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'same-origin',
+    'Sec-GPC': '1',
+    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+}
 
-# Function to scrape the movie listing page and get the movie details
-def tamilmv():
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
-    }
-    movie_details = []
-
-    try:
-        # Fetch the main page
-        response = requests.get(BASE_URL, headers=headers)
-        response.raise_for_status()  # Raise an error if the request fails
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        # Find all <li> elements that hold the movie links
-        li_elements = soup.find_all('li', class_='ipsDataItem')
-
-        if not li_elements:
-            return [{"error": "No movie listings found. The page structure might have changed."}]
-
-        # For each <li>, scrape the topic URL and get movie details
-        for li in li_elements:
-            movie_title = li.find('a', class_='ipsDataItem_title').text.strip()
-            topic_url = li.find('a', class_='ipsDataItem_title')['href']
-
-            # Now, get the movie details for each topic URL
-            details = get_movie_details(topic_url)
-            movie_details.extend(details)
-
-    except requests.exceptions.RequestException as e:
-        movie_details = [{"error": str(e)}]
-
-    return movie_details
-
-# Function to get details for each movie by scraping the topic URL
-def get_movie_details(url):
-    movie_details = []
-
-    try:
-        # Make a request to the topic URL
-        full_url = urljoin(BASE_URL, url)  # Ensure we use an absolute URL
-        topic_response = requests.get(full_url)
-        topic_response.raise_for_status()  # Raise an error if the request fails
-        topic_soup = BeautifulSoup(topic_response.text, 'html.parser')
-
-        # Find all torrent links (magnet links)
-        torrent_links = topic_soup.find_all('a', attrs={'data-fileext': 'torrent'})
-
-        for torrent_link in torrent_links:
-            magnet_link = torrent_link['href']
-            
-            # Extract the title from the <span> inside the <a> tag
-            title_tag = torrent_link.find('span')
-            if title_tag:
-                title = title_tag.get_text(strip=True).replace('.torrent', '').strip()
-
-                # Add the movie details to the list
-                movie_details.append({
-                    'title': title,
-                    'magnet_link': magnet_link
-                })
-    except Exception as e:
-        movie_details = [{"error": str(e)}]
-
-    return movie_details
-
-# Home route for the Flask API
-@app.route("/")
-def home():
-    return jsonify({"message": "Welcome to the Movie Scraper API!"})
-
-# RSS route for the Flask API to fetch movie data
-@app.route("/rss", methods=["GET"])
+# Function to scrape movies from 1tamilmv
 def fetch_movies():
-    movies = tamilmv()
-    return jsonify({"movies": movies})
+    BASE_URL = 'https://www.1tamilmv.re/'
 
-# Expose the app to run
+    # Make a request to the website using the custom headers
+    response = requests.get(BASE_URL, headers=headers)
+
+    # Parse HTML using BeautifulSoup
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find all <li> elements with the class 'ipsDataItem' (all topics)
+    li_elements = soup.find_all('li', class_='ipsDataItem')
+
+    # Extract all movie details (title and magnet links)
+    movie_details = []
+
+    for li in li_elements:
+        topic_link = li.find('a', class_='ipsDataItem_title')
+        if topic_link:
+            topic_url = topic_link['href']
+
+            # Make a request to the topic URL using the custom headers
+            topic_response = requests.get(topic_url, headers=headers)
+            topic_soup = BeautifulSoup(topic_response.text, 'html.parser')
+
+            # Find all <a> elements with data-fileext="torrent" (magnet links)
+            torrent_links = topic_soup.find_all('a', attrs={'data-fileext': 'torrent'})
+
+            # Extract the torrent link and the file name/title from the <span> tag
+            for torrent_link in torrent_links:
+                magnet_link = torrent_link['href']
+                
+                # Extract title (from the <span> tag inside the <a> tag)
+                title = torrent_link.find('span')
+                if title:
+                    title_text = title.get_text(strip=True)
+                    
+                    # Remove ".torrent" from the title if it exists
+                    title_text = title_text.replace('.torrent', '').strip()
+
+                    # Add the movie title and magnet link to the movie details list
+                    movie_details.append({
+                        'Title': title_text,
+                        'Magnet Link': magnet_link
+                    })
+
+    return movie_details
+
+
+# Define route for fetching movies
+@app.route("/rss", methods=["GET"])
+def rss():
+    movies = fetch_movies()
+    if movies:
+        return jsonify({"movies": movies})
+    else:
+        return jsonify({"error": "No movies found."}), 404
+
+
+# Define the home route
+@app.route("/", methods=["GET"])
+def home():
+    return "Welcome to the Movie Scraper API!"
+
+
 if __name__ == "__main__":
     app.run(debug=True)
