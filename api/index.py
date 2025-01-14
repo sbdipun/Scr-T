@@ -32,11 +32,22 @@ def fetch_movies():
     # Make a request to the website using the custom headers
     response = requests.get(BASE_URL, headers=headers)
 
+    # Check if the request was successful
+    if response.status_code != 200:
+        print(f"Failed to retrieve the page. Status code: {response.status_code}")
+        return []
+
+    print("Page fetched successfully.")
+
     # Parse HTML using BeautifulSoup
     soup = BeautifulSoup(response.text, 'html.parser')
 
+    # Check the first 500 characters of the HTML to see if it's what you expect
+    print(soup.prettify()[:500])  # Show only first 500 characters of HTML for debugging
+
     # Find all <li> elements with the class 'ipsDataItem' (all topics)
     li_elements = soup.find_all('li', class_='ipsDataItem')
+    print(f"Found {len(li_elements)} movie elements.")
 
     # Extract all movie details (title and magnet links)
     movie_details = []
@@ -52,6 +63,7 @@ def fetch_movies():
 
             # Find all <a> elements with data-fileext="torrent" (magnet links)
             torrent_links = topic_soup.find_all('a', attrs={'data-fileext': 'torrent'})
+            print(f"Found {len(torrent_links)} torrent links.")
 
             # Extract the torrent link and the file name/title from the <span> tag
             for torrent_link in torrent_links:
@@ -72,6 +84,7 @@ def fetch_movies():
                     })
 
     return movie_details
+
 
 
 # Define route for fetching movies
