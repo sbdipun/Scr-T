@@ -21,24 +21,14 @@ def tamilmv():
         response.raise_for_status()  # Raise an error if the request fails
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Debugging: Print out the raw HTML to ensure we are getting the correct page
-        print("Page loaded successfully. Here's the raw HTML:")
-        print(soup.prettify())  # Prettify is used to format the HTML output
-
         # Find all <li> elements that hold the movie links
         li_elements = soup.find_all('li', class_='ipsDataItem')
 
-        # Debugging: Print out the li_elements to see if we're finding any
-        print(f"Found {len(li_elements)} li elements.")
-
-        if len(li_elements) == 0:
-            return {"error": "No movie listings found. The page structure might have changed."}
+        if not li_elements:
+            return [{"error": "No movie listings found. The page structure might have changed."}]
 
         # Extract the URLs for each topic (movie)
         topic_urls = [li.find('a', class_='ipsDataItem_title')['href'] for li in li_elements if li.find('a', class_='ipsDataItem_title')]
-
-        # Debugging: Print out the topic URLs
-        print(f"Found {len(topic_urls)} topic URLs: {topic_urls}")
 
         # Scrape each topic URL for torrent details
         for topic_url in topic_urls:
@@ -46,7 +36,7 @@ def tamilmv():
             results.append(movie_details)
 
     except requests.exceptions.RequestException as e:
-        return {"error": str(e)}
+        results = [{"error": str(e)}]
 
     return results
 
@@ -60,15 +50,8 @@ def get_movie_details(url):
         topic_response.raise_for_status()  # Raise an error if the request fails
         topic_soup = BeautifulSoup(topic_response.text, 'html.parser')
 
-        # Debugging: Print the raw movie page HTML to inspect it
-        print(f"Scraping movie page: {url}")
-        print(topic_soup.prettify())
-
         # Find all torrent links (magnet links)
         torrent_links = topic_soup.find_all('a', attrs={'data-fileext': 'torrent'})
-
-        # Debugging: Print out the magnet links found
-        print(f"Found {len(torrent_links)} torrent links.")
 
         for torrent_link in torrent_links:
             magnet_link = torrent_link['href']
@@ -84,7 +67,7 @@ def get_movie_details(url):
                     'magnet_link': magnet_link
                 })
     except Exception as e:
-        movie_details = {"error": str(e)}
+        movie_details = [{"error": str(e)}]
 
     return movie_details
 
@@ -96,7 +79,7 @@ def home():
 # RSS route for the Flask API to fetch movie data
 @app.route("/rss", methods=["GET"])
 def fetch_movies():
-    movies = get_movie_detailsv()
+    movies = tamilmv()
     return jsonify({"movies": movies})
 
 # Expose the app to run
