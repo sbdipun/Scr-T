@@ -45,10 +45,9 @@ def scrape_links():
                 decoded_title = urllib.parse.unquote(title)
 
                 # Extract size from the title (e.g., "250MB" or "2.5GB" in the title)
-                size_match = re.search(r'(\d+(\.\d+)?\s?(MB|GB))', title, re.IGNORECASE)
-                size = size_match.group(0) if size_match else 'Unknown Size'
+                
 
-                description = f"Size: {size}, mag link: {magnet_link}"
+                description = f"mag link: {magnet_link}"
 
                 # Escape only special characters needed for XML
                 safe_description = html.escape(description)
@@ -56,8 +55,7 @@ def scrape_links():
                 results.append({
                     "title": decoded_title,
                     "magnet_link": magnet_link,
-                    "description": safe_description,
-                    "size": size,
+                    "description": safe_description
                 })
         return results
     except requests.exceptions.RequestException as e:
