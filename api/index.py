@@ -1,7 +1,6 @@
 from flask import Flask, jsonify
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 
 # Create Flask app
 app = Flask(__name__)
@@ -24,7 +23,9 @@ def tamilmv():
 
         # Find all <li> elements that hold the movie links
         li_elements = soup.find_all('li', class_='ipsDataItem')
-        topic_urls = [urljoin(BASE_URL, li.find('a', class_='ipsDataItem_title')['href']) for li in li_elements]
+        
+        # Extract the URLs for each topic (movie)
+        topic_urls = [li.find('a', class_='ipsDataItem_title')['href'] for li in li_elements if li.find('a', class_='ipsDataItem_title')]
 
         # Scrape each topic URL for torrent details
         for topic_url in topic_urls:
