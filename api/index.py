@@ -47,7 +47,7 @@ def scrape_links():
                 # Extract size from the title (e.g., "250MB" or "2.5GB" in the title)
                 
 
-                description = f"mag link"
+                description = f"."
 
                 # Escape only special characters needed for XML
                 safe_description = html.escape(description)
