@@ -10,7 +10,7 @@ from urllib.parse import quote_plus, urlparse, quote, parse_qs
 app = Flask(__name__)
 
 # Base URL to scrape
-base_url = "https://www.1tamilblasters.cool/"
+base_url = "https://www.1tamilblasters.rodeo/"
 
 # Headers for requests
 headers = {
