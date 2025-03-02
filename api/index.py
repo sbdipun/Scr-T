@@ -41,7 +41,7 @@ def scrape_links():
         divs = soup.find_all('div', class_='ipsType_break ipsContained')
 
         # Limit to 10 links to prevent timeout
-        links = [div.find('a')['href'] for div in divs[:10] if div.find('a')]
+        links = [div.find('a')['href'] for div in divs[:5] if div.find('a')]
 
         results = []
         for link in links:
