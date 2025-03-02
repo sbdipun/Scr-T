@@ -31,9 +31,10 @@ def scrape_links():
         response = requests.get("https://api.scrapingdog.com/scrape", params={
             'api_key': SCRAPINGDOG_API_KEY,
             'url': base_url,
-            'dynamic': 'false',
+            'dynamic': 'true',  # Enable dynamic rendering
         })
-        response.raise_for_status()
+        response.raise_for_status()  # Raise an error for bad status codes
+        print("API Response:", response.text)  # Debugging: Print the response
 
         soup = BeautifulSoup(response.text, 'html.parser')
         divs = soup.find_all('div', class_='ipsType_break ipsContained')
@@ -69,6 +70,7 @@ def scrape_links():
         return results
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
+        print(f"Response content: {response.text}")  # Debugging: Print the error response
         return []
 
 # Home Route - Returns JSON
