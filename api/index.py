@@ -10,11 +10,15 @@ from urllib.parse import quote_plus, urlparse, quote, parse_qs
 app = Flask(__name__)
 
 # Base URL to scrape
-base_url = "https://www.1tamilblasters.cool/"
+base_url = "https://www.1tamilblasters.rodeo"
 
 # Headers for requests
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+    'Referer': base_url,
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Connection': 'keep-alive'
 }
 
 # Function to scrape the latest links and magnet links
