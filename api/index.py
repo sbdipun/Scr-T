@@ -21,36 +21,29 @@ headers = {
     'Connection': 'keep-alive'
 }
 
-# ScraperAPI Key
-SCRAPER_API_KEY = "6975335b6394fb9b0c87c254ba79d7c7"
-SCRAPER_API_URL = "https://api.scraperapi.com/"
+# Cookies
+cookies = {
+    'ips4_IPSSessionFront': '08a6fe2b1637afb9b6973870fed589d5',
+    'ips4_guestTime': '1740937556',
+    'ips4_ipsTimezone': 'Asia/Calcutta',
+    'ips4_hasJS': 'true'
+}
 
-# Function to scrape the latest links and magnet links using ScraperAPI
+# Function to scrape the latest links and magnet links
 def scrape_links():
     try:
-        # Use ScraperAPI to scrape the base URL
-        payload = {
-            'api_key': SCRAPER_API_KEY,
-            'url': base_url,
-        }
-        response = requests.get(SCRAPER_API_URL, params=payload, timeout=10)
-        response.raise_for_status()  # Raise an error for bad status codes
-        print("ScraperAPI Response Status Code:", response.status_code)  # Debugging
+        response = requests.get(base_url, headers=headers, cookies=cookies, timeout=10)
+        response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
         divs = soup.find_all('div', class_='ipsType_break ipsContained')
 
         # Limit to 10 links to prevent timeout
-        links = [div.find('a')['href'] for div in divs[:5] if div.find('a')]
+        links = [div.find('a')['href'] for div in divs[:10] if div.find('a')]
 
         results = []
         for link in links:
-            # Use ScraperAPI to scrape individual links
-            sub_payload = {
-                'api_key': SCRAPER_API_KEY,
-                'url': link,
-            }
-            sub_response = requests.get(SCRAPER_API_URL, params=sub_payload, timeout=10)
+            sub_response = requests.get(link, headers=headers, cookies=cookies, timeout=10)
             sub_response.raise_for_status()
 
             sub_soup = BeautifulSoup(sub_response.text, 'html.parser')
@@ -62,6 +55,9 @@ def scrape_links():
                 title = query_params.group(1) if query_params else 'No Title'
                 # Decode the URL-encoded title
                 decoded_title = urllib.parse.unquote(title)
+
+                # Extract size from the title (e.g., "250MB" or "2.5GB" in the title)
+                # You can add your logic here to extract size if needed
 
                 description = f"."
 
@@ -76,7 +72,6 @@ def scrape_links():
         return results
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
-        print(f"Response content: {response.text if 'response' in locals() else 'No response'}")  # Debugging
         return []
 
 # Home Route - Returns JSON
