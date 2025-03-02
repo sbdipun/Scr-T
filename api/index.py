@@ -21,20 +21,21 @@ headers = {
     'Connection': 'keep-alive'
 }
 
-# ScrapingDog API Key
-SCRAPINGDOG_API_KEY = '67c492e3862a1a23b247b93e'
+# ScraperAPI Key
+SCRAPER_API_KEY = "6975335b6394fb9b0c87c254ba79d7c7"
+SCRAPER_API_URL = "https://api.scraperapi.com/"
 
-# Function to scrape the latest links and magnet links using ScrapingDog API
+# Function to scrape the latest links and magnet links using ScraperAPI
 def scrape_links():
     try:
-        # Use ScrapingDog API to scrape the base URL
-        response = requests.get("https://api.scrapingdog.com/scrape", params={
-            'api_key': SCRAPINGDOG_API_KEY,
+        # Use ScraperAPI to scrape the base URL
+        payload = {
+            'api_key': SCRAPER_API_KEY,
             'url': base_url,
-            'dynamic': 'true',  # Enable dynamic rendering
-        })
+        }
+        response = requests.get(SCRAPER_API_URL, params=payload, timeout=10)
         response.raise_for_status()  # Raise an error for bad status codes
-        print("API Response:", response.text)  # Debugging: Print the response
+        print("ScraperAPI Response Status Code:", response.status_code)  # Debugging
 
         soup = BeautifulSoup(response.text, 'html.parser')
         divs = soup.find_all('div', class_='ipsType_break ipsContained')
@@ -44,7 +45,12 @@ def scrape_links():
 
         results = []
         for link in links:
-            sub_response = requests.get(link, headers=headers, timeout=10)
+            # Use ScraperAPI to scrape individual links
+            sub_payload = {
+                'api_key': SCRAPER_API_KEY,
+                'url': link,
+            }
+            sub_response = requests.get(SCRAPER_API_URL, params=sub_payload, timeout=10)
             sub_response.raise_for_status()
 
             sub_soup = BeautifulSoup(sub_response.text, 'html.parser')
@@ -70,7 +76,7 @@ def scrape_links():
         return results
     except requests.exceptions.RequestException as e:
         print(f"Request failed: {e}")
-        print(f"Response content: {response.text}")  # Debugging: Print the error response
+        print(f"Response content: {response.text if 'response' in locals() else 'No response'}")  # Debugging
         return []
 
 # Home Route - Returns JSON
