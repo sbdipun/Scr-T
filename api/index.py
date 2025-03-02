@@ -21,10 +21,18 @@ headers = {
     'Connection': 'keep-alive'
 }
 
-# Function to scrape the latest links and magnet links
+# ScrapingDog API Key
+SCRAPINGDOG_API_KEY = '67c492e3862a1a23b247b93e'
+
+# Function to scrape the latest links and magnet links using ScrapingDog API
 def scrape_links():
     try:
-        response = requests.get(base_url, headers=headers, timeout=10)
+        # Use ScrapingDog API to scrape the base URL
+        response = requests.get("https://api.scrapingdog.com/scrape", params={
+            'api_key': SCRAPINGDOG_API_KEY,
+            'url': base_url,
+            'dynamic': 'false',
+        })
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -45,11 +53,8 @@ def scrape_links():
                 magnet_link = magnet_link_tag['href']
                 query_params = re.search(r'dn=([^&]+)', magnet_link)
                 title = query_params.group(1) if query_params else 'No Title'
-                 # Decode the URL-encoded title
+                # Decode the URL-encoded title
                 decoded_title = urllib.parse.unquote(title)
-
-                # Extract size from the title (e.g., "250MB" or "2.5GB" in the title)
-                
 
                 description = f"."
 
