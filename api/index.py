@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, Response
 import requests
+import random
 from bs4 import BeautifulSoup
 import re
 import urllib.parse
@@ -12,21 +13,30 @@ app = Flask(__name__)
 # Base URL to scrape
 base_url = "https://www.1tamilblasters.rodeo"
 
-proxy = {
-    'http': 'http://aasootoch:2FrmT7AwZj@161.77.228.238:50100'
-}
-
-# Headers for requests
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
-}
-
 # Function to scrape the latest links and magnet links
 def scrape_links():
     try:
-        response = requests.get(base_url, proxies=proxy, headers=headers)
+        # Enhanced headers
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Referer': 'https://www.google.com/',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        }
+
+        # Proxy rotation (optional)
+        proxies = [
+            {'http': 'http://aasootoch:2FrmT7AwZj@161.77.228.238:50100'}
+        ]
+        proxy = random.choice(proxies)
+
+        # Make the request
+        response = requests.get(base_url, proxies=proxy, headers=headers, timeout=10)
         response.raise_for_status()
 
+        # Parse the HTML
         soup = BeautifulSoup(response.text, 'html.parser')
         divs = soup.find_all('div', class_='ipsType_break ipsContained')
 
@@ -45,15 +55,9 @@ def scrape_links():
                 magnet_link = magnet_link_tag['href']
                 query_params = re.search(r'dn=([^&]+)', magnet_link)
                 title = query_params.group(1) if query_params else 'No Title'
-                # Decode the URL-encoded title
                 decoded_title = urllib.parse.unquote(title)
 
-                # Extract size from the title (e.g., "250MB" or "2.5GB" in the title)
-                # You can add your logic here to extract size if needed
-
                 description = f"."
-
-                # Escape only special characters needed for XML
                 safe_description = html.escape(description)
 
                 results.append({
