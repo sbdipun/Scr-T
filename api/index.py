@@ -12,19 +12,19 @@ app = Flask(__name__)
 # Base URL to scrape
 base_url = "https://www.1tamilblasters.rodeo"
 
+proxy = {
+    'http': 'http://aasootoch:2FrmT7AwZj@161.77.228.238:50100'
+}
+
 # Headers for requests
 headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
-    'Referer': base_url,
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Connection': 'keep-alive'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36'
 }
 
 # Function to scrape the latest links and magnet links
 def scrape_links():
     try:
-        response = requests.get(base_url, headers=headers, timeout=10)
+        response = requests.get(base_url, proxies=proxy, headers=headers)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
