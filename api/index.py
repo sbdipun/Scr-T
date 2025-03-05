@@ -14,8 +14,7 @@ base_url = "https://www.1tamilblasters.rodeo"
 
 # Proxy configuration
 proxy = {
-    "http": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100",
-    "https": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100"
+    "http": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100"
 }
 
 # Headers for requests
