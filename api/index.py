@@ -4,13 +4,18 @@ from bs4 import BeautifulSoup
 import re
 import urllib.parse
 import html
-from urllib.parse import quote_plus, urlparse, quote, parse_qs
 
 # Initialize Flask app
 app = Flask(__name__)
 
 # Base URL to scrape
 base_url = "https://www.1tamilblasters.rodeo"
+
+# Proxy settings
+proxy = {
+    "http": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100",
+    "https": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100",
+}
 
 # Headers for requests
 headers = {
@@ -21,18 +26,10 @@ headers = {
     'Connection': 'keep-alive'
 }
 
-# Cookies
-cookies = {
-    'ips4_IPSSessionFront': '08a6fe2b1637afb9b6973870fed589d5',
-    'ips4_guestTime': '1740937556',
-    'ips4_ipsTimezone': 'Asia/Calcutta',
-    'ips4_hasJS': 'true'
-}
-
 # Function to scrape the latest links and magnet links
 def scrape_links():
     try:
-        response = requests.get(base_url, headers=headers, cookies=cookies, timeout=10)
+        response = requests.get(base_url, headers=headers, proxies=proxy, timeout=10)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -43,7 +40,7 @@ def scrape_links():
 
         results = []
         for link in links:
-            sub_response = requests.get(link, headers=headers, cookies=cookies, timeout=10)
+            sub_response = requests.get(link, headers=headers, proxies=proxy, timeout=10)
             sub_response.raise_for_status()
 
             sub_soup = BeautifulSoup(sub_response.text, 'html.parser')
@@ -55,9 +52,6 @@ def scrape_links():
                 title = query_params.group(1) if query_params else 'No Title'
                 # Decode the URL-encoded title
                 decoded_title = urllib.parse.unquote(title)
-
-                # Extract size from the title (e.g., "250MB" or "2.5GB" in the title)
-                # You can add your logic here to extract size if needed
 
                 description = f"."
 
@@ -111,3 +105,4 @@ def rss():
 # Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
+    
