@@ -5,7 +5,6 @@ import re
 import urllib.parse
 import html
 
-# Initialize Flask app
 app = Flask(__name__)
 
 # Base URL to scrape
@@ -26,7 +25,6 @@ headers = {
     'Connection': 'keep-alive'
 }
 
-# Function to scrape the latest links and magnet links
 def scrape_links():
     try:
         response = requests.get(base_url, headers=headers, proxies=proxy, timeout=10)
@@ -50,13 +48,9 @@ def scrape_links():
                 magnet_link = magnet_link_tag['href']
                 query_params = re.search(r'dn=([^&]+)', magnet_link)
                 title = query_params.group(1) if query_params else 'No Title'
-                # Decode the URL-encoded title
                 decoded_title = urllib.parse.unquote(title)
 
-                description = f"."
-
-                # Escape only special characters needed for XML
-                safe_description = html.escape(description)
+                safe_description = html.escape(".")
 
                 results.append({
                     "title": decoded_title,
@@ -68,12 +62,10 @@ def scrape_links():
         print(f"Request failed: {e}")
         return []
 
-# Home Route - Returns JSON
 @app.route("/")
 def home():   
     return jsonify({"message": "Welcome to TamilBlasters RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
 
-# RSS Route - Returns XML
 @app.route('/rss')
 def rss():
     data = scrape_links()
@@ -102,7 +94,11 @@ def rss():
 
     return Response(rss_feed, mimetype='application/rss+xml')
 
-# Run the Flask app
+# Vercel requires a handler function
+def handler(event, context):
+    with app.app_context():
+        return app.full_dispatch_request()
+
 if __name__ == '__main__':
     app.run(debug=True)
     
