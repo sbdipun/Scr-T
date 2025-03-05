@@ -12,6 +12,12 @@ app = Flask(__name__)
 # Base URL to scrape
 base_url = "https://www.1tamilblasters.rodeo"
 
+# Proxy configuration
+proxy = {
+    "http": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100",
+    "https": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100"
+}
+
 # Headers for requests
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36',
@@ -32,7 +38,8 @@ cookies = {
 # Function to scrape the latest links and magnet links
 def scrape_links():
     try:
-        response = requests.get(base_url, headers=headers, cookies=cookies, timeout=10)
+        # Use the proxy for the request
+        response = requests.get(base_url, headers=headers, cookies=cookies, proxies=proxy, timeout=10)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -43,7 +50,8 @@ def scrape_links():
 
         results = []
         for link in links:
-            sub_response = requests.get(link, headers=headers, cookies=cookies, timeout=10)
+            # Use the proxy for sub-requests
+            sub_response = requests.get(link, headers=headers, cookies=cookies, proxies=proxy, timeout=10)
             sub_response.raise_for_status()
 
             sub_soup = BeautifulSoup(sub_response.text, 'html.parser')
