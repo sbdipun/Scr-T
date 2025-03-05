@@ -4,17 +4,13 @@ from bs4 import BeautifulSoup
 import re
 import urllib.parse
 import html
+from urllib.parse import quote_plus, urlparse, quote, parse_qs
 
+# Initialize Flask app
 app = Flask(__name__)
 
 # Base URL to scrape
 base_url = "https://www.1tamilblasters.rodeo"
-
-# Proxy settings
-proxy = {
-    "http": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100",
-    "https": "http://aasootoch:2FrmT7AwZj@161.77.228.238:50100",
-}
 
 # Headers for requests
 headers = {
@@ -25,9 +21,10 @@ headers = {
     'Connection': 'keep-alive'
 }
 
+# Function to scrape the latest links and magnet links
 def scrape_links():
     try:
-        response = requests.get(base_url, headers=headers, proxies=proxy, timeout=10)
+        response = requests.get(base_url, headers=headers, timeout=10)
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -38,7 +35,7 @@ def scrape_links():
 
         results = []
         for link in links:
-            sub_response = requests.get(link, headers=headers, proxies=proxy, timeout=10)
+            sub_response = requests.get(link, headers=headers, timeout=10)
             sub_response.raise_for_status()
 
             sub_soup = BeautifulSoup(sub_response.text, 'html.parser')
@@ -48,9 +45,16 @@ def scrape_links():
                 magnet_link = magnet_link_tag['href']
                 query_params = re.search(r'dn=([^&]+)', magnet_link)
                 title = query_params.group(1) if query_params else 'No Title'
+                # Decode the URL-encoded title
                 decoded_title = urllib.parse.unquote(title)
 
-                safe_description = html.escape(".")
+                # Extract size from the title (e.g., "250MB" or "2.5GB" in the title)
+                # You can add your logic here to extract size if needed
+
+                description = f"."
+
+                # Escape only special characters needed for XML
+                safe_description = html.escape(description)
 
                 results.append({
                     "title": decoded_title,
@@ -62,10 +66,12 @@ def scrape_links():
         print(f"Request failed: {e}")
         return []
 
+# Home Route - Returns JSON
 @app.route("/")
 def home():   
     return jsonify({"message": "Welcome to TamilBlasters RSS FEED Site. Use /rss end of the Url and BooM!! Developed By Mr. Shaw"})
 
+# RSS Route - Returns XML
 @app.route('/rss')
 def rss():
     data = scrape_links()
@@ -94,11 +100,6 @@ def rss():
 
     return Response(rss_feed, mimetype='application/rss+xml')
 
-# Vercel requires a handler function
-def handler(event, context):
-    with app.app_context():
-        return app.full_dispatch_request()
-
+# Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
-    
