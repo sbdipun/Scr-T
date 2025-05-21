@@ -11,7 +11,7 @@ from urllib.parse import quote_plus, urlparse, quote, parse_qs
 app = Flask(__name__)
 
 # Base URL to scrape
-base_url = "https://www.1tamilblasters.rodeo"
+base_url = "https://www.1tamilblasters.earth"
 
 # Function to scrape the latest links and magnet links
 def scrape_links():
@@ -28,7 +28,7 @@ def scrape_links():
 
         # Proxy rotation (optional)
         proxies = [
-            {'http': 'http://aasootoch:2FrmT7AwZj@161.77.228.238:50100'}
+            {'https': 'https://ogais4d6kcfVkEyuGy3nz1mT:GuRA1qAXgoi85mW9GZYJsJKN@in160.nordvpn.com:89'}
         ]
         proxy = random.choice(proxies)
 
