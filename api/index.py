@@ -28,7 +28,7 @@ def scrape_links():
 
         # Proxy rotation (optional)
         proxies = [
-            {'https': ''}
+            {'https': 'https://ogais4d6kcfVkEyuGy3nz1mT:GuRA1qAXgoi85mW9GZYJsJKN@in160.nordvpn.com:89'}
         ]
         proxy = random.choice(proxies)
 
