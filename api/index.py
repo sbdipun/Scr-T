@@ -11,7 +11,7 @@ from urllib.parse import quote_plus, urlparse, quote, parse_qs
 app = Flask(__name__)
 
 # Base URL to scrape
-base_url = "https://www.1tamilblasters.fi"
+base_url = "https://www.1tamilblasters.how"
 
 # Function to scrape the latest links and magnet links
 def scrape_links():
