@@ -87,10 +87,10 @@ def rss_feed():
 
     for item in all_items:
         rss += "<item>\n"
-        rss += f"<title><![CDATA[{item['title']} | {item['size']}]]></title>\n"
-        rss += f"<link>{item['link']}</link>\n"
+        rss += f"<title><!{item['title']}</title>\n"
+        rss += f"<description>{item['size']}</description>\n"
         if item["magnet"]:
-            rss += f"<magnet><![CDATA[{item['magnet']}]]></magnet>\n"
+            rss += f"<link><{item['link']}></link>\n"
         rss += "</item>\n"
 
     rss += "</channel></rss>"
