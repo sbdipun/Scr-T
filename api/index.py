@@ -92,6 +92,6 @@ def rss_feed():
         if item["magnet"]:
             rss += f"<link><![CDATA[{item['magnet']}]]></link>\n"
         rss += "</item>\n"
-        rss += "</channel></rss>"
+    rss += "</channel></rss>"
 
     return Response(rss, content_type="application/xml")
