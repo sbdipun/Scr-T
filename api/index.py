@@ -88,7 +88,7 @@ def rss_feed():
     for item in all_items:
         rss += "<item>\n"
         rss += f"<title><![CDATA[{item['title']}]]></title>\n"
-        rss += f"<description><![CDATA[Size = {item['size']}]]></description>\n"
+        rss += f"<description><![CDATA[Size: {item['size']}]]></description>\n"
         if item["magnet"]:
             rss += f"<link><![CDATA[{item['magnet']}]]></link>\n"
         rss += "</item>\n"
