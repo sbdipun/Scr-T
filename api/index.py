@@ -1,4 +1,3 @@
-import json
 from curl_cffi import requests
 from bs4 import BeautifulSoup
 from flask import Flask, Response
@@ -23,7 +22,9 @@ def scrape(url):
     soup = BeautifulSoup(resp.text, "html.parser")
     items = []
 
-    for row in soup.select("tbody tr")[:10]:   # only 10 items
+    rows = soup.select("tbody tr")[:10]  # get only 10 per category
+
+    for row in rows:
         tds = row.find_all("td")
         if len(tds) < 3:
             continue
@@ -31,13 +32,14 @@ def scrape(url):
         name_td = tds[1]
         size_td = tds[2]
 
-        # Extract title link
+        # find proper title link
         title_link = None
         for a in name_td.find_all("a"):
             txt = a.get_text(strip=True)
             if txt:
                 title_link = a
                 break
+
         if not title_link:
             continue
 
@@ -46,7 +48,7 @@ def scrape(url):
         if href.startswith("/"):
             href = BASE + href
 
-        # Extract magnet
+        # magnet link
         magnet = None
         for a in name_td.find_all("a"):
             h = a.get("href", "")
@@ -64,11 +66,11 @@ def scrape(url):
         })
 
     return items
-    
+
 @app.route("/")
 def home():   
     return jsonify({"message": "UIndex Rss Feed is Up and Running..."})
-
+    
 @app.route("/rss")
 def rss_feed():
     all_items = []
@@ -76,27 +78,21 @@ def rss_feed():
     for url in URLS:
         all_items.extend(scrape(url))
 
-    # Build RSS XML
+    # Build RSS
     rss = '<?xml version="1.0" encoding="UTF-8"?>\n'
     rss += '<rss version="2.0"><channel>\n'
     rss += '<title>UIndex Torrent Feed</title>\n'
     rss += '<link>https://uindex.org</link>\n'
-    rss += '<description>Latest torrents from UIndex</description>\n'
+    rss += '<description>Latest torrents</description>\n'
 
     for item in all_items:
         rss += "<item>\n"
         rss += f"<title><![CDATA[{item['title']} | {item['size']}]]></title>\n"
         rss += f"<link>{item['link']}</link>\n"
-        if item['magnet']:
+        if item["magnet"]:
             rss += f"<magnet><![CDATA[{item['magnet']}]]></magnet>\n"
         rss += "</item>\n"
 
     rss += "</channel></rss>"
 
     return Response(rss, content_type="application/xml")
-
-
-# Needed for Vercel Python
-def handler(request, response):
-    return app(request, response)
-
