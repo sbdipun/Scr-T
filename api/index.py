@@ -64,7 +64,10 @@ def scrape(url):
         })
 
     return items
-
+    
+@app.route("/")
+def home():   
+    return jsonify({"message": "UIndex Rss Feed is Up and Running..."})
 
 @app.route("/rss")
 def rss_feed():
